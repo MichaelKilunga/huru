@@ -2,47 +2,67 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Jobs\ProcessIncomingSms;
+use App\Support\Phone;
+use App\Support\Settings;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 
 class SmsController extends Controller
 {
+    /**
+     * Africa's Talking inbound callback (form-encoded: from, to, text, date, id, linkId).
+     */
     public function inbound(Request $request)
     {
-        // Africa's Talking sends 'from' and 'text' in the POST body
-        $from = $request->input('from');
-        $text = $request->input('text');
-        
-        // Log the raw payload exactly as received from Africa's Talking
-        Log::info('Incoming SMS from: ' . $from . ' with text: ' . $text);
+        $from = Phone::normalize($request->input('from'));
+        $text = trim((string) $request->input('text', ''));
 
-        if (!$from || !$text) {
+        if (! $from || $text === '') {
             return response()->json(['status' => 'error', 'message' => 'Invalid payload'], 400);
         }
 
-        // ---------------------------------------------------------------------------
-        // Strip the shared short-code keyword "HURU" from the beginning of the text.
-        // Africa's Talking prepends it automatically for shared codes.
-        // We match it case-insensitively and trim any surrounding whitespace that
-        // remains, so the AI receives a clean, keyword-free question.
-        // ---------------------------------------------------------------------------
-        $keyword = 'HURU';
+        // A flood from one number must not become a flood of model calls.
+        $key = 'sms-inbound:' . $from;
+        if (RateLimiter::tooManyAttempts($key, 20)) {
+            Log::warning('Inbound SMS rate limited', ['from' => Phone::mask($from)]);
 
-        if (!preg_match('/^' . preg_quote($keyword, '/') . '\b/i', $text)) {
-            // Message was not addressed to our keyword — ignore it silently.
-            Log::info('SMS ignored: does not start with keyword "' . $keyword . '"');
+            return response()->json(['status' => 'rate_limited']);
+        }
+        RateLimiter::hit($key, 60);
+
+        $keyword = (string) Settings::get('sms_keyword');
+        $clean = $text;
+
+        // On a shared short code the operator prepends the keyword; strip it when present.
+        if ($keyword !== '' && preg_match('/^' . preg_quote($keyword, '/') . '\b\s*/iu', $text)) {
+            $clean = trim(preg_replace('/^' . preg_quote($keyword, '/') . '\b\s*/iu', '', $text));
+        } elseif ($keyword !== '' && config('services.at.require_keyword')) {
+            Log::info('SMS ignored: keyword missing', ['from' => Phone::mask($from)]);
+
             return response()->json(['status' => 'ignored']);
         }
 
-        $cleanText = trim(preg_replace('/^' . preg_quote($keyword, '/') . '\b\s*/i', '', $text));
+        // A bare keyword is a request for help.
+        if ($clean === '') {
+            $clean = 'HELP';
+        }
 
-        Log::info('Clean text after stripping keyword: ' . $cleanText);
+        Log::info('Inbound SMS accepted', ['from' => Phone::mask($from), 'chars' => strlen($clean)]);
 
-        // Dispatch job immediately to ensure fast response
-        ProcessIncomingSms::dispatch($from, $cleanText);
-        Log::info('Job dispatched for user: ' . $from);
+        ProcessIncomingSms::dispatch($from, $clean, $request->input('id'));
 
         return response()->json(['status' => 'success']);
+    }
+
+    /**
+     * Optional delivery report callback from Africa's Talking.
+     */
+    public function deliveryReport(Request $request)
+    {
+        Log::info('SMS delivery report', $request->only('id', 'status', 'phoneNumber', 'failureReason'));
+
+        return response()->json(['status' => 'ok']);
     }
 }

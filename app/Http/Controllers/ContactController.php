@@ -2,81 +2,69 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Settings;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 
 class ContactController extends Controller
 {
-    /**
-     * Handle all landing page contact/inquiry submissions.
-     * Routes: subscribe, partner, impact-deck-request
-     */
     public function submit(Request $request)
     {
-        $type    = $request->input('type', 'subscribe');
-        $email   = $request->input('email');
-        $name    = $request->input('name', '');
-        $org     = $request->input('organisation', '');
-        $message = $request->input('message', '');
-        $tier    = $request->input('tier', '');
+        $data = $request->validate([
+            'type' => 'nullable|in:subscribe,partner,general',
+            'email' => 'required|email|max:120',
+            'name' => 'nullable|string|max:80',
+            'organisation' => 'nullable|string|max:120',
+            'message' => 'nullable|string|max:2000',
+            'website' => 'nullable|max:0', // honeypot
+        ]);
 
-        $adminEmail = config('mail.from.address');
+        $key = 'contact:' . $request->ip();
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            return back()->with('contact_error', 'Umetuma mara nyingi. Jaribu tena baadaye.');
+        }
+        RateLimiter::hit($key, 3600);
 
-        $subjects = [
-            'subscribe'    => '📧 New Subscriber — HuruLearn Mailing List',
-            'partner'      => '🤝 New Partnership Enquiry — HuruLearn',
-            'impact_deck'  => '📄 Impact Deck Request — HuruLearn',
-        ];
+        $type = $data['type'] ?? 'general';
+        $to = Settings::get('contact_email') ?: config('mail.from.address');
+        $app = Settings::get('app_name');
 
-        $subject = $subjects[$type] ?? '📬 New Enquiry — HuruLearn';
+        $subject = match ($type) {
+            'subscribe' => "[{$app}] New subscriber",
+            'partner' => "[{$app}] Partnership enquiry",
+            default => "[{$app}] New enquiry",
+        };
+
+        $body = implode("\n", array_filter([
+            "Type: {$type}",
+            'Email: ' . $data['email'],
+            'Name: ' . ($data['name'] ?? '-'),
+            'Organisation: ' . ($data['organisation'] ?? '-'),
+            '',
+            $data['message'] ?? '',
+            '',
+            'Received: ' . now()->toDateTimeString() . ' (' . config('app.timezone') . ')',
+        ]));
 
         try {
-            Mail::raw(
-                $this->buildEmailBody($type, $email, $name, $org, $message, $tier),
-                function ($mail) use ($adminEmail, $subject, $email, $name) {
-                    $mail->to($adminEmail)
-                         ->replyTo($email ?: $adminEmail, $name ?: 'Visitor')
-                         ->subject($subject);
-                }
-            );
+            if ($to) {
+                Mail::raw($body, function ($mail) use ($to, $subject, $data) {
+                    $mail->to($to)->replyTo($data['email'], $data['name'] ?? 'Visitor')->subject($subject);
+                });
+            }
+            Log::info('Contact form', ['type' => $type, 'email' => $data['email']]);
 
-            Log::info("HuruLearn contact: type={$type}, email={$email}, org={$org}");
+            return back()->with('contact_success', match ($type) {
+                'partner' => 'Asante! Tutawasiliana nawe ndani ya siku 2 za kazi.',
+                'subscribe' => 'Umejiunga! Tutakutumia taarifa za maendeleo.',
+                default => 'Ujumbe wako umepokelewa. Asante.',
+            });
+        } catch (\Throwable $e) {
+            Log::error('Contact mail failed: ' . $e->getMessage());
 
-            return redirect()->back()->with('contact_success', $this->successMessage($type));
-        } catch (\Exception $e) {
-            Log::error("HuruLearn contact mail failed: " . $e->getMessage());
-            return redirect()->back()->with('contact_error', 'Failed to send. Please email us directly at ' . $adminEmail);
+            return back()->with('contact_error', 'Imeshindikana kutuma. Tafadhali tutumie barua pepe moja kwa moja: ' . $to);
         }
-    }
-
-    private function buildEmailBody(string $type, string $email, string $name, string $org, string $message, string $tier): string
-    {
-        $lines = [
-            "=== HuruLearn Landing Page — New " . strtoupper($type) . " ===",
-            "",
-            "Type    : " . $type,
-            "Email   : " . ($email ?: 'not provided'),
-            "Name    : " . ($name  ?: 'not provided'),
-        ];
-
-        if ($org)     $lines[] = "Org/Co  : " . $org;
-        if ($tier)    $lines[] = "Package : " . $tier;
-        if ($message) $lines[] = "\nMessage :\n" . $message;
-
-        $lines[] = "";
-        $lines[] = "Received at: " . now()->toDateTimeString() . " (EAT)";
-        $lines[] = "Platform   : HuruLearn SMS Learning — https://hurulearn.hurudigital.co.tz";
-
-        return implode("\n", $lines);
-    }
-
-    private function successMessage(string $type): string
-    {
-        return match($type) {
-            'partner'     => "Thank you for your partnership interest! We'll be in touch within 2 business days.",
-            'impact_deck' => "Thanks! We'll email your Impact Deck shortly.",
-            default       => "You're on the list! We'll keep you updated on HuruLearn's progress.",
-        };
     }
 }

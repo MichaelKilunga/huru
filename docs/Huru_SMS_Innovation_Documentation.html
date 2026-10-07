@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Huru SMS – Innovation Documentation</title>
+<style>
+  @page { size: A4; margin: 22mm 20mm 22mm 20mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, Helvetica, sans-serif; color: #0f172a; font-size: 11pt; line-height: 1.5; margin: 0; }
+  h1 { font-size: 22pt; color: #166534; margin: 0 0 4pt; }
+  h2 { font-size: 14pt; color: #166534; border-bottom: 2px solid #15803d; padding-bottom: 3pt; margin: 20pt 0 8pt; page-break-after: avoid; }
+  h3 { font-size: 11.5pt; color: #1e40af; margin: 12pt 0 4pt; page-break-after: avoid; }
+  p { margin: 0 0 7pt; }
+  ul, ol { margin: 0 0 8pt 18pt; padding: 0; }
+  li { margin-bottom: 3pt; }
+  table { border-collapse: collapse; width: 100%; margin: 6pt 0 10pt; font-size: 10pt; page-break-inside: auto; }
+  th, td { border: 1px solid #cbd5e1; padding: 5pt 7pt; vertical-align: top; text-align: left; }
+  th { background: #f0fdf4; color: #166534; font-weight: 700; }
+  tr { page-break-inside: avoid; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; background: #f1f5f9; padding: 1pt 3pt; border-radius: 3px; }
+  .cover { height: 240mm; display: flex; flex-direction: column; justify-content: center; page-break-after: always; }
+  .cover .badge { display: inline-block; background: #15803d; color: #fff; font-weight: 700; padding: 5pt 12pt; border-radius: 999px; font-size: 10pt; margin-bottom: 16pt; width: fit-content; }
+  .cover h1 { font-size: 34pt; }
+  .cover .sub { font-size: 15pt; color: #475569; margin: 6pt 0 26pt; }
+  .cover .meta { border-top: 2px solid #15803d; padding-top: 12pt; font-size: 11pt; }
+  .cover .meta div { margin-bottom: 4pt; }
+  .box { border: 1.5px solid #15803d; background: #f0fdf4; border-radius: 8px; padding: 10pt 12pt; margin: 8pt 0 12pt; }
+  .box.blue { border-color: #1d4ed8; background: #eff6ff; }
+  .kw { display: inline-block; background: #dcfce7; color: #14532d; font-weight: 800; padding: 1pt 6pt; border-radius: 4px; border: 1px solid #86efac; }
+  .step { display: flex; gap: 10pt; margin-bottom: 8pt; page-break-inside: avoid; }
+  .step .n { flex: 0 0 22pt; height: 22pt; border-radius: 6px; background: #1d4ed8; color: #fff; font-weight: 800; text-align: center; line-height: 22pt; }
+  .sign { margin-top: 14pt; }
+  .sign .line { display: inline-block; border-bottom: 1px solid #0f172a; min-width: 260pt; margin-left: 6pt; }
+  .muted { color: #475569; font-size: 9.5pt; }
+  .pb { page-break-before: always; }
+  .docfoot { margin-top: 24pt; padding-top: 8pt; border-top: 1px solid #cbd5e1; text-align: center; font-size: 9pt; color: #64748b; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <span class="badge">Documentation for Copyright Registration</span>
+  <h1>Huru SMS</h1>
+  <div class="sub">Multichannel SMS and Web Citizen Information and Guidance System for Tanzania</div>
+  <p style="font-size:12pt;max-width:150mm">A digital service that lets any person in Tanzania ask a question on any everyday matter, by SMS or on the web, and receive a short, practical answer in Kiswahili or English, grounded in verified Tanzanian context.</p>
+  <div class="meta">
+    <div><strong>Owner and developer:</strong> Huru Digital Co. Ltd., Tanzania</div>
+    <div><strong>Type of work:</strong> Computer software (web application and SMS service) with accompanying content and documentation</div>
+    <div><strong>Version documented:</strong> 1.0</div>
+    <div><strong>Date:</strong> October 2026</div>
+    <div><strong>Prepared for:</strong> Copyright Society of Tanzania (COSOTA)</div>
+  </div>
+</div>
+
+<h2>1. Summary of the innovation</h2>
+<p>Huru SMS is a digital information and guidance service. A citizen writes a question in ordinary words, in Kiswahili or English, and sends it either as an SMS to the shortcode <strong>15054</strong> starting with the word <span class="kw">HURU</span>, or through a web chat on the Huru SMS website. The service reads the question, works out what it is about and where the person is, gathers verified information about Tanzania, and replies with a short, clear answer that tells the person what to do and where to go.</p>
+<p>The service is deliberately general. It answers questions about law and rights, health, farming and livestock, school subjects and examinations, government services such as identity cards and certificates, money and business, jobs, family matters, technology, transport and any other everyday topic. It is designed for every Tanzanian, including people with a basic phone and no internet.</p>
+
+<div class="box">
+<strong>In one sentence:</strong> Huru SMS turns any mobile phone into a trusted, Tanzania-aware helpdesk for daily life.
+</div>
+
+<h2>2. The problem it solves</h2>
+<ul>
+  <li>Many citizens do not know their rights, the steps to obtain a government service, the danger signs of common illnesses, or where the nearest help is. Reliable information is scattered across offices and websites, often in English.</li>
+  <li>A large share of the population uses basic phones without internet, so web-only or app-only solutions do not reach them.</li>
+  <li>General internet tools give answers that are not specific to Tanzania: wrong currency, foreign laws, invented phone numbers or offices that do not exist here.</li>
+</ul>
+<p>Huru SMS addresses all three: it works over plain SMS, it answers in the citizen's own language, and every answer is built on Tanzanian law, institutions, places and procedures.</p>
+
+<h2>3. How a citizen uses the service</h2>
+<h3>3.1 By SMS (no internet needed)</h3>
+<div class="step"><div class="n">1</div><div>Open the message application on any mobile phone.</div></div>
+<div class="step"><div class="n">2</div><div>Write the word <span class="kw">HURU</span> followed by the question. Example: <code>HURU nifanyeje kupata kitambulisho cha NIDA?</code></div></div>
+<div class="step"><div class="n">3</div><div>Send it to <strong>15054</strong>.</div></div>
+<div class="step"><div class="n">4</div><div>The answer arrives as an SMS. Follow-up questions are understood in the context of the previous ones.</div></div>
+
+<table>
+  <tr><th style="width:32%">Text sent by SMS</th><th>What the service does</th></tr>
+  <tr><td><code>MSAADA</code> or <code>HELP</code></td><td>Sends a short guide to using the service</td></tr>
+  <tr><td><code>LUGHA SW</code> / <code>LUGHA EN</code></td><td>Sets Kiswahili or English as the reply language</td></tr>
+  <tr><td><code>JINA Asha</code></td><td>Saves the person's name for a friendlier reply</td></tr>
+  <tr><td><code>MKOA Mwanza</code></td><td>Saves the person's region so nearby services are suggested</td></tr>
+  <tr><td><code>ACHA</code> / <code>ANZA</code></td><td>Stops or resumes replies at any time</td></tr>
+</table>
+
+<h3>3.2 By web chat (with internet)</h3>
+<ol>
+  <li>Open the Huru SMS website and press <strong>Web Chat</strong>.</li>
+  <li>Enter a phone number. A one-time code is sent by SMS to confirm the number belongs to the person.</li>
+  <li>Ask questions in the chat. Each answer shows its topic and can be rated helpful or not helpful. Previous conversations are saved and can be searched by word, date or topic.</li>
+  <li>The person can save their name, preferred language and home region, and can sign out at any time.</li>
+</ol>
+<p>The website also offers a moderated community space where citizens discuss topics and share experiences, and it can be installed on a phone like an app. When the phone is offline, the website still shows the SMS instructions.</p>
+
+<h2 class="pb">4. What is original about the innovation</h2>
+<p>The originality of Huru SMS lies in its <strong>Tanzanian context engine</strong>: the set of components that understand a question in local terms before any answer is written. The language technology used to word the final reply is a standard component available to anyone; the value created by Huru Digital is everything around it.</p>
+
+<h3>4.1 Topic detection in two languages</h3>
+<p>Each question is scored against weighted word lists in Kiswahili and English covering twelve topic areas (law, health, agriculture, education, government services, money, business, employment, family, technology, transport, general). The result chooses the right persona, the right knowledge and the right contacts. Words such as "amezimia", "dharura", "accident" or "not breathing" flag an emergency so the correct emergency number is given in the first line of the reply.</p>
+
+<h3>4.2 Location awareness</h3>
+<p>The service recognises all 31 regions of Tanzania, their common districts and many well-known neighbourhoods (for example Sinza, Mbagala, Nyakato or Uyole), including the short names people actually type. When a person mentions a place, the reply prioritises services in that district and region.</p>
+
+<h3>4.3 Verified local knowledge</h3>
+<p>Answers draw first on a knowledge base written and maintained by the operator: short fact blocks on Tanzanian law, health guidance, farming seasons, the school system, identity and certificate procedures, taxes, business registration, worker rights and more, each with its source. Questions are matched to entries using a bilingual search that understands Kiswahili word forms (for example "nimekamatwa", "kukamatwa" and "kamatwa" are treated as the same idea).</p>
+
+<h3>4.4 National directory and local services</h3>
+<p>A national directory holds institutions and hotlines (police 112, fire 114, ambulance 115, child helpline 116, TRA, NIDA, RITA, NHIF, NECTA, HESLB, legal aid organisations and others). A separate directory of local services holds legal aid providers, hospitals, police desks and offices by region and district; the legal aid list is imported from the official Mama Samia Legal Aid Campaign register. The operator can mark each contact as verified.</p>
+
+<h3>4.5 Country rules in every answer</h3>
+<p>Every reply is prepared with the date and time in East Africa Time, the Tanzanian shilling, the chain of local government offices (village, ward, district, region), the court system and the way government payments are made (control numbers). For each topic the service applies rules on how things actually work in Tanzania, for instance which laws to cite, which office to start at, and when to advise seeing a professional.</p>
+
+<h3>4.6 Honesty and safety rules</h3>
+<ul>
+  <li>The service must say when a fee, deadline or official may have changed and name the office that can confirm it.</li>
+  <li>It must never invent phone numbers, prices, laws or names of officials; it may only use contacts supplied by the directories.</li>
+  <li>It gives no medical dosages, does not act as a lawyer, and takes no political or religious position.</li>
+  <li>Replies sent by SMS are kept short enough for a few text messages; web replies may be longer.</li>
+</ul>
+
+<h3>4.7 One service, two channels</h3>
+<p>SMS and web chat share one processing path, so behaviour, safety checks, memory of previous questions and record keeping are identical whichever way a person reaches the service.</p>
+
+<h2>5. Main components of the software</h2>
+<table>
+  <tr><th style="width:36%">Component (file in the source code)</th><th>What it does</th></tr>
+  <tr><td><code>app/Services/ConversationService.php</code></td><td>Receives every question from SMS or web; handles commands, abuse checks, limits, memory of previous turns and record keeping; returns the reply.</td></tr>
+  <tr><td><code>app/Services/TopicClassifier.php</code></td><td>Detects the topic of a question in Kiswahili or English and flags emergencies.</td></tr>
+  <tr><td><code>app/Services/TanzaniaContext.php</code></td><td>Regions, districts and neighbourhoods; country facts; rules for each topic as they apply in Tanzania.</td></tr>
+  <tr><td><code>app/Services/LanguageDetector.php</code></td><td>Decides whether a question is in Kiswahili or English.</td></tr>
+  <tr><td><code>app/Services/KnowledgeRetriever.php</code></td><td>Finds the most relevant verified knowledge entries for a question.</td></tr>
+  <tr><td><code>app/Services/PromptEngine.php</code></td><td>Combines persona, country context, knowledge, nearby services, national contacts and output rules into the instructions used to write the reply.</td></tr>
+  <tr><td><code>app/Services/Ai/</code></td><td>Connection to the language technology provider that words the final reply.</td></tr>
+  <tr><td><code>app/Services/ModerationService.php</code></td><td>Detects abusive language; supports the warning and blocking system.</td></tr>
+  <tr><td><code>app/Services/SmsService.php</code></td><td>Sends SMS replies and one-time codes through the SMS gateway.</td></tr>
+  <tr><td><code>app/Http/Controllers/</code></td><td>SMS receiver, web chat, community pages and administration screens.</td></tr>
+  <tr><td><code>app/Support/Settings.php</code></td><td>All adjustable settings with their rules and defaults.</td></tr>
+  <tr><td><code>database/</code></td><td>Database structure and the starter knowledge, directories, personas and settings.</td></tr>
+  <tr><td><code>resources/views/</code></td><td>All web pages: landing page, web chat, community, legal pages, administration.</td></tr>
+  <tr><td><code>tests/</code></td><td>28 automated tests that check SMS handling, web chat, topic and location detection, safety and administration.</td></tr>
+</table>
+<p class="muted">The application contains about 7,400 lines of original PHP, HTML and JavaScript across 46 application files, 24 page templates and 7 test files, plus starter content (42 knowledge entries, 33 national contacts, 10 personas and a directory of over 180 legal aid providers).</p>
+
+<h2 class="pb">6. Administration</h2>
+<p>A protected administration area allows Huru Digital staff to run the service without technical help:</p>
+<ul>
+  <li><strong>Dashboard</strong>: questions per day, by topic and by channel; response times; feedback; system health.</li>
+  <li><strong>Conversations and citizens</strong>: read conversations and the information used to answer them; block, unblock or clear warnings.</li>
+  <li><strong>Knowledge base</strong>: add, edit, activate or import fact blocks by topic and language.</li>
+  <li><strong>National directory and local services</strong>: maintain institutions, hotlines and services by region and district; mark them as verified.</li>
+  <li><strong>Personas</strong>: adjust how the service introduces itself and behaves for each topic and language.</li>
+  <li><strong>Settings</strong>: language policy, reply length for SMS and web, memory depth, one-time code rules, abuse limits, maintenance mode and messages.</li>
+</ul>
+
+<h2>7. Privacy, safety and security</h2>
+<ul>
+  <li>Only the phone number and the conversation are stored, to continue conversations and let people see their own history.</li>
+  <li>Opening a phone number's history on the web requires a one-time SMS code that expires in minutes and is stored in protected form.</li>
+  <li>The person's name and phone number are never sent together with the question to the language technology provider.</li>
+  <li>Incoming SMS are accepted only from the SMS gateway using a shared secret, and the number of questions per person per minute is limited.</li>
+  <li>Abusive language is warned and then blocked after a set number of warnings; the operator can reverse this.</li>
+  <li>All connections to outside services are encrypted and verified.</li>
+  <li>Terms and conditions and a privacy policy are published on the website.</li>
+</ul>
+
+<h2>8. Technology used</h2>
+<table>
+  <tr><th style="width:32%">Part</th><th>Technology</th></tr>
+  <tr><td>Application</td><td>PHP 8.2 with the Laravel 12 framework</td></tr>
+  <tr><td>Database</td><td>MySQL 8 (SQLite for local testing)</td></tr>
+  <tr><td>SMS channel</td><td>Africa's Talking SMS gateway, shortcode 15054, keyword HURU</td></tr>
+  <tr><td>Language technology</td><td>Google Gemini, used only to word the final reply after the service has prepared the Tanzanian context</td></tr>
+  <tr><td>Web pages</td><td>HTML, CSS and JavaScript; installable as a phone application</td></tr>
+  <tr><td>Quality assurance</td><td>28 automated tests run on every change</td></tr>
+</table>
+
+<h2>9. Contents of the submitted package</h2>
+<p>The accompanying archive contains the complete source code and documentation of Huru SMS version 1.0:</p>
+<table>
+  <tr><th style="width:32%">Folder or file</th><th>Contents</th></tr>
+  <tr><td><code>docs/</code></td><td>This document (PDF and HTML)</td></tr>
+  <tr><td><code>README.md</code></td><td>Plain-language overview and instructions to run the application</td></tr>
+  <tr><td><code>app/</code></td><td>Application logic (services, controllers, models, jobs, commands)</td></tr>
+  <tr><td><code>database/</code></td><td>Database structure and starter content</td></tr>
+  <tr><td><code>resources/views/</code></td><td>Web pages</td></tr>
+  <tr><td><code>routes/</code>, <code>config/</code>, <code>bootstrap/</code></td><td>Application wiring and configuration</td></tr>
+  <tr><td><code>public/</code></td><td>Public web files: logo, manifest, offline support</td></tr>
+  <tr><td><code>tests/</code></td><td>Automated tests</td></tr>
+  <tr><td><code>composer.json</code>, <code>package.json</code></td><td>Lists of third-party libraries used (not included; downloaded during installation)</td></tr>
+</table>
+<p class="muted">Secret keys, passwords, user data and third-party libraries are not included in the package. The folders <code>vendor/</code> and <code>node_modules/</code> contain open-source libraries owned by their respective authors and are restored automatically by the installation commands in the README.</p>
+
+<h2>10. Ownership and declaration</h2>
+<p>Huru SMS, including its source code, page designs, written content (knowledge entries, directories, personas, help texts and legal pages) and this documentation, was conceived and developed by Huru Digital Co. Ltd. of Tanzania. Third-party open-source libraries used by the application remain the property of their respective owners and are used under their licences; the keyword HURU and shortcode 15054 are allocated through the SMS gateway provider and may change without affecting the work.</p>
+
+<div class="sign">
+  <p>Name of applicant: <span class="line"></span></p>
+  <p>Position: <span class="line"></span></p>
+  <p>Signature: <span class="line"></span> &nbsp; Date: <span class="line" style="min-width:120pt"></span></p>
+</div>
+
+<div class="docfoot">Huru SMS – Innovation Documentation – Huru Digital Co. Ltd. – All rights reserved</div>
+</body>
+</html>

@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "hurudigital/huru",
     "type": "project",
-    "description": "Huru: everyday question answering for Tanzanians over SMS and web.",
+    "description": "Huru SMS: everyday question answering for Tanzanians over SMS and web.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {

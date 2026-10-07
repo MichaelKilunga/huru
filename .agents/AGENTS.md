@@ -1,6 +1,6 @@
-# Project Rules - Huru
+# Project Rules - Huru SMS
 
-Huru is a generic, Tanzania-aware question answering service for every citizen (not only students, not only legal topics). It runs over SMS (shortcode `15054`, keyword `HURU`) and a web chat.
+Huru SMS is a generic, Tanzania-aware question answering service for every citizen (not only students, not only legal topics). It runs over SMS (shortcode `15054`, keyword `HURU`) and a web chat.
 
 ## Product
 - **Generic by design**: any topic is valid. Topic detection (`App\Services\TopicClassifier`) only chooses the persona, knowledge and contacts; it never refuses a topic.
@@ -8,7 +8,7 @@ Huru is a generic, Tanzania-aware question answering service for every citizen (
 - **Honesty over confidence**: the engine must say when something should be confirmed with the responsible office and must never invent phone numbers, fees or officials. Keep this in every persona and constraint change.
 
 ## User interface and aesthetics
-- **No "AI"/"Bot" wording** in user-facing text, page titles or labels. Present Huru as a direct guidance service. The admin panel may say "engine".
+- **No "AI"/"Bot" wording** in user-facing text, page titles or labels. Present Huru SMS as a direct guidance service. The admin panel may say "engine".
 - **Government palette**: Forest Green (`#166534` / `#15803d`), Royal Blue (`#1e40af` / `#1d4ed8`), white/off-white (`#ffffff`, `#f8fafc`). No brown, amber, gradients or glow effects on public pages.
 - **Light, high-readability themes** for all citizen-facing pages. Plain Inter font.
 - **SMS visibility**: the keyword `HURU` and shortcode `15054` must stay clearly visible on the home page and the web chat login screen, and must survive any layout refactor. Values come from settings (`sms_keyword`, `sms_shortcode`).

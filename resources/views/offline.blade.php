@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Uko nje ya mtandao – Huru</title>
+    <title>Uko nje ya mtandao – Huru SMS</title>
     <meta name="robots" content="noindex">
     <link rel="icon" href="/logo.svg" type="image/svg+xml">
     <style>

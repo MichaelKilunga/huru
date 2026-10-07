@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $settings['app_name'] }} – Uliza lolote, kwa SMS {{ $settings['sms_shortcode'] }} au mtandaoni</title>
     <meta name="description" content="{{ $settings['app_name'] }} hujibu swali lolote la maisha ya kila siku Tanzania: sheria, afya, kilimo, masomo, huduma za serikali, fedha, ajira. Tuma {{ $settings['sms_keyword'] }} kwenda {{ $settings['sms_shortcode'] }} bila intaneti, au tumia web chat.">
-    <meta name="keywords" content="Huru, SMS {{ $settings['sms_shortcode'] }}, maswali Tanzania, sheria, afya, kilimo, NIDA, TRA, elimu, msaada wa kisheria, Kiswahili">
+    <meta name="keywords" content="Huru SMS, SMS {{ $settings['sms_shortcode'] }}, maswali Tanzania, sheria, afya, kilimo, NIDA, TRA, elimu, msaada wa kisheria, Kiswahili">
     <meta name="author" content="Huru Digital Co. Ltd.">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="{{ url('/') }}">
@@ -21,7 +21,7 @@
     <meta name="theme-color" content="#15803d">
     @verbatim
     <script type="application/ld+json">
-    {"@context":"https://schema.org","@type":"WebApplication","name":"Huru","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","description":"Everyday question answering service for Tanzanians over SMS and web, in Swahili and English.","offers":{"@type":"Offer","price":"0","priceCurrency":"TZS"}}
+    {"@context":"https://schema.org","@type":"WebApplication","name":"Huru SMS","applicationCategory":"UtilitiesApplication","operatingSystem":"Any","description":"Everyday question answering service for Tanzanians over SMS and web, in Swahili and English.","offers":{"@type":"Offer","price":"0","priceCurrency":"TZS"}}
     </script>
     @endverbatim
     <link rel="preconnect" href="https://fonts.googleapis.com">

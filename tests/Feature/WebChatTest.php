@@ -19,12 +19,14 @@ class WebChatTest extends TestCase
     {
         $this->mock(SmsService::class, fn (MockInterface $m) => $m->shouldReceive('isConfigured')->andReturn(false));
 
-        $this->postJson('/chat/request-otp', ['phone_number' => '0712345678'])
+        $login = $this->postJson('/chat/request-otp', ['phone_number' => '0712345678'])
             ->assertOk()
             ->assertJsonPath('otp_required', false)
             ->assertJsonPath('user.phone_masked', '+255 *** 678');
 
-        $this->getJson('/chat/session')->assertJsonPath('authenticated', true);
+        // Login regenerates the session; the rotated CSRF token must be handed back.
+        $this->assertNotEmpty($login->json('csrf'));
+        $this->assertSame($login->json('csrf'), $this->getJson('/chat/session')->assertJsonPath('authenticated', true)->json('csrf'));
     }
 
     public function test_otp_flow_when_sms_is_configured(): void

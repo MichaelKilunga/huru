@@ -23,7 +23,7 @@ class CommunitySeeder extends Seeder
             ['slug' => 'announcements'],
             [
                 'title' => 'Matangazo Rasmi',
-                'description' => 'Taarifa muhimu kutoka kwa timu ya Huru.',
+                'description' => 'Taarifa muhimu kutoka kwa timu ya Huru SMS.',
                 'is_system' => true,
                 'is_private' => false,
             ]

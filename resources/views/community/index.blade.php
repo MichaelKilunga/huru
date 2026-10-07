@@ -1,4 +1,4 @@
-@extends('layouts.public', ['title' => 'Jamii', 'description' => 'Jamii ya Huru: jadili, shirikiana uzoefu na upate ushauri kutoka kwa wananchi wenzako.', 'robots' => 'noindex, follow'])
+@extends('layouts.public', ['title' => 'Jamii', 'description' => 'Jamii ya Huru SMS: jadili, shirikiana uzoefu na upate ushauri kutoka kwa wananchi wenzako.', 'robots' => 'noindex, follow'])
 
 @section('content')
 <style>

@@ -1,6 +1,6 @@
 {
-    "name": "Huru",
-    "short_name": "Huru",
+    "name": "Huru SMS",
+    "short_name": "Huru SMS",
     "description": "Uliza lolote kuhusu maisha Tanzania. Kwa SMS 15054 au mtandaoni.",
     "start_url": "/chat",
     "scope": "/",

@@ -25,7 +25,7 @@ class Settings
             // ---- Branding ------------------------------------------------
             'app_name' => [
                 'group' => 'Branding', 'label' => 'Service name', 'type' => 'text',
-                'default' => 'Huru', 'rules' => 'required|string|max:40',
+                'default' => 'Huru SMS', 'rules' => 'required|string|max:40',
                 'hint' => 'Shown in replies, the web chat and SMS help text.',
             ],
             'sms_keyword' => [

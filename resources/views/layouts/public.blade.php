@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Huru' }} – Huru</title>
-    <meta name="description" content="{{ $description ?? 'Huru – uliza lolote kwa SMS 15054 au mtandaoni.' }}">
+    <title>{{ $title ?? 'Huru SMS' }} – Huru SMS</title>
+    <meta name="description" content="{{ $description ?? 'Huru SMS – uliza lolote kwa SMS 15054 au mtandaoni.' }}">
     <meta name="robots" content="{{ $robots ?? 'index, follow' }}">
     <link rel="icon" href="/logo.svg" type="image/svg+xml">
     <link rel="manifest" href="/manifest.json">
@@ -40,7 +40,7 @@
 <body>
 <header>
     <div class="nav">
-        <a href="{{ route('welcome') }}" class="brand"><img src="/logo.svg" alt="">Huru</a>
+        <a href="{{ route('welcome') }}" class="brand"><img src="/logo.svg" alt="">Huru SMS</a>
         <div><span class="sms">SMS: HURU → 15054</span><a class="btn" href="{{ route('chat.index') }}">Web Chat</a></div>
     </div>
 </header>

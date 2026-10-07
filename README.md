@@ -1,114 +1,127 @@
-# Huru
+# Huru SMS
 
-Huru is an everyday question-answering service for the people of Tanzania. Anyone can ask anything, in Swahili or English, and get a short, practical, locally grounded answer:
+**Huru SMS** is a digital service that lets any person in Tanzania ask a question and get a clear, useful answer on their phone, in Kiswahili or English. It works on the simplest mobile phone through SMS, and on smartphones and computers through a web chat.
 
-- **SMS** on any phone: send `HURU <question>` to `15054` (Africa's Talking).
-- **Web chat** at `/chat`: phone number plus one-time code, conversation memory, history search, feedback.
+Owner and developer: **Huru Digital Co. Ltd.**, Tanzania.
 
-It is the successor of the HuruLearn legal-education bot, rebuilt as a generic assistant with real Tanzanian context: topic detection, a curated knowledge base, a national directory of institutions, place-bound services by region and district, emergency awareness and bilingual handling.
+---
 
-## How an answer is produced
+## 1. What the service does
 
-1. `SmsController` / `WebChatController` receive the text and hand it to `ConversationService` with the channel.
-2. `ConversationService` runs service commands (`MSAADA`, `LUGHA SW|EN`, `JINA`, `MKOA`, `ACHA`, `ANZA`), moderation with strikes, rate limiting and the maintenance switch.
-3. `TopicClassifier` picks a topic (legal, health, agriculture, education, government, finance, business, employment, family, technology, transport, general) and flags emergencies. `TanzaniaContext` detects region, district or neighbourhood in the text.
-4. `PromptEngine` assembles a system instruction: persona for the topic and language, country context (date in EAT, TZS, institutions, emergency numbers), topic rules, citizen profile, matching `knowledge_entries` (bilingual keyword retrieval with light stemming), nearby `local_resources`, relevant `reference_contacts`, and channel-specific output rules (SMS length vs web length, plain text, honesty rules).
-5. `GeminiClient` calls Google Gemini with the system instruction plus the recent conversation turns, and the reply, tokens, latency and status are logged to `ai_logs`.
+A citizen sends a question. Huru SMS reads it, understands the topic and the language, checks where the person is, looks up verified information about Tanzania, and replies with a short, practical answer. If the person needs an office or a service near them (for example a legal aid provider in Kahama), the reply names it with its contact.
 
-Everything an operator needs to tune lives in the admin panel: knowledge base (with CSV/JSON import), national directory, local services, personas, settings, citizens, conversations.
+Topics covered include:
 
-## Requirements
+- Law and rights (arrest, land, marriage, inheritance, tenants, contracts)
+- Health (danger signs, clinics, vaccination, health insurance)
+- Farming, livestock and fishing (seasons, seeds, pests, animal vaccines)
+- Education (school system, examinations, student loans, school subjects)
+- Government services (NIDA identity card, birth certificate, passport, TIN, government payments, electricity)
+- Money and business (taxes, loans, mobile money safety, registering a business)
+- Jobs and employment (contracts, leave, dismissal, job scams)
+- Family and community (violence, child protection, where to get help)
+- Technology and transport (SIM cards, phone safety, traffic fines, driving licence)
+- Any other everyday question
 
-- PHP 8.2+, Composer, Node 20+, MySQL 8 (SQLite works for a quick start).
-- A Google Gemini API key.
-- An Africa's Talking account with an SMS shortcode or sender ID (optional for local web testing).
+## 2. How a citizen uses it
 
-## Setup
+**By SMS (no internet needed)**
+
+1. Open the message app on any phone.
+2. Write the word **HURU** followed by the question. Example: `HURU nifanyeje kupata kitambulisho cha NIDA?`
+3. Send it to **15054**.
+4. The answer arrives as an SMS within a short time.
+
+Helpful SMS commands:
+
+| Send | What happens |
+| --- | --- |
+| `MSAADA` or `HELP` | A short guide to the service |
+| `LUGHA SW` / `LUGHA EN` | Choose Kiswahili or English for replies |
+| `JINA Asha` | Save your name |
+| `MKOA Mwanza` | Save your region, so nearby services are suggested |
+| `ACHA` | Stop receiving replies |
+| `ANZA` | Start again |
+
+**By web chat (with internet)**
+
+1. Open the website and press **Web Chat**.
+2. Enter a phone number. A one-time code is sent by SMS to confirm it is yours.
+3. Ask questions in the chat. Previous conversations are saved, can be searched, and each answer can be rated helpful or not helpful.
+
+## 3. What makes it different
+
+- **Built for Tanzania.** The service assumes Tanzanian law, the Tanzanian shilling, East Africa time, Tanzanian institutions (NIDA, RITA, TRA, NHIF, NECTA, HESLB and others) and the real emergency numbers (112, 114, 115, 116).
+- **Knows where you are.** It recognises all 31 regions, common districts and well-known neighbourhoods, and uses that to point people to services close to them.
+- **Verified knowledge first.** Answers are grounded in a knowledge base and directories maintained by the operator, not only on general internet knowledge. The service says clearly when something should be confirmed with the responsible office, and it never invents phone numbers, fees or names of officials.
+- **Two languages, one service.** It detects whether a question is in Kiswahili or English and answers in the same language.
+- **Works on every phone.** SMS first, web second. Replies sent by SMS are kept short to fit a few text messages.
+- **Safe to use.** Abusive language is warned and then blocked, emergencies are recognised and the right number is given first, and people can stop the service at any time.
+
+## 4. What the operator can manage
+
+A protected administration area lets Huru Digital staff:
+
+- see how many questions arrive, by day, by topic and by channel;
+- read conversations and the information used to answer them;
+- add or edit knowledge entries (one by one or by importing a file);
+- maintain the national directory of institutions and hotlines, and the list of local services by region and district;
+- adjust the wording and behaviour of the service per topic and language;
+- change settings such as reply length, language policy and safety limits;
+- block or unblock users.
+
+## 5. Privacy and safety
+
+- Only the phone number and the conversation are stored. They are needed to continue a conversation and to let the person see their own history.
+- The web chat requires a one-time SMS code before a phone number's history can be opened.
+- A person's name and phone number are never sent together with the question to the language technology provider.
+- Government payments are always described as being made through official control numbers, never cash to an officer.
+- Full terms and a privacy policy are published on the website.
+
+## 6. Technology used (for the technical reader)
+
+| Part | Technology |
+| --- | --- |
+| Application | PHP 8.2 with the Laravel 12 framework |
+| Database | MySQL 8 (SQLite for quick local testing) |
+| SMS | Africa's Talking SMS gateway (shortcode 15054, keyword HURU) |
+| Language technology | Google Gemini, used only to word the final reply after the service has gathered the Tanzanian context |
+| Web pages | HTML, CSS and JavaScript; installable as a phone app (PWA) |
+| Tests | 28 automated tests covering SMS, web chat, topic detection, location detection and the administration area |
+
+Main parts of the source code:
+
+| Folder or file | Purpose |
+| --- | --- |
+| `app/Services/ConversationService.php` | Handles every incoming question, commands, safety checks and logging |
+| `app/Services/TopicClassifier.php` | Detects the topic of a question and recognises emergencies |
+| `app/Services/TanzaniaContext.php` | Regions, districts, country facts and topic rules for Tanzania |
+| `app/Services/KnowledgeRetriever.php` | Finds the most relevant verified knowledge entries |
+| `app/Services/PromptEngine.php` | Combines persona, context, knowledge and contacts into instructions for the reply |
+| `app/Services/Ai/` | Connection to the language technology provider |
+| `app/Services/SmsService.php` | Sending SMS through Africa's Talking |
+| `app/Http/Controllers/` | Web chat, SMS receiver, community and administration screens |
+| `database/seeders/` | Starter knowledge, directories, personas and settings |
+| `resources/views/` | All web pages |
+| `tests/` | Automated tests |
+
+## 7. Running the application
 
 ```bash
-cp .env.example .env            # then fill GEMINI_API_KEY, AT_*, DB_*, ADMIN_PASSWORD
+cp .env.example .env         # fill in GEMINI_API_KEY, AT_* and database details
 composer install
 npm install && npm run build
 php artisan key:generate
-php artisan migrate --seed       # creates the admin user and starter data
-php artisan serve                # http://localhost:8000
+php artisan migrate --seed   # creates tables, the admin account and starter data
+php artisan serve            # open http://localhost:8000
+php artisan queue:work       # processes SMS replies (or run the scheduler every minute)
+php artisan huru:import-legal-aid   # imports the national legal aid provider list
 ```
 
-Queue worker for SMS replies (one of):
+The SMS gateway must be configured to deliver incoming messages to `/api/sms/inbound?token=<AT_WEBHOOK_SECRET>`.
 
-```bash
-php artisan queue:work           # long-running worker
-# or add to cron:  * * * * * php /path/artisan schedule:run   (drains the queue every minute)
-```
+Administration is at `/admin/login`.
 
-Import the full Mama Samia Legal Aid Campaign provider list:
+## 8. Ownership
 
-```bash
-php artisan huru:import-legal-aid
-```
-
-## Africa's Talking configuration
-
-Inbound callback URL (note the token):
-
-```
-https://your-host/api/sms/inbound?token=<AT_WEBHOOK_SECRET>
-```
-
-Delivery reports (optional): `https://your-host/api/sms/delivery?token=<AT_WEBHOOK_SECRET>`.
-
-On a shared short code the operator prepends the keyword; set `AT_REQUIRE_KEYWORD=true` to ignore messages without it.
-
-## Environment variables
-
-| Variable | Purpose |
-| --- | --- |
-| `GEMINI_API_KEY` | Google Gemini key. Model, temperature and token limits are set in the admin panel. |
-| `AT_USERNAME`, `AT_API_KEY`, `AT_FROM` | Africa's Talking credentials and sender (shortcode). |
-| `AT_WEBHOOK_SECRET` | Random string that must be present as `?token=` on inbound callbacks. Required in production. |
-| `AT_REQUIRE_KEYWORD` | Ignore inbound SMS without the keyword. |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | Admin account created by the seeder. |
-| `APP_TIMEZONE` | Defaults to `Africa/Dar_es_Salaam`. |
-
-## Admin panel
-
-`/admin/login` with the seeded admin account.
-
-- **Dashboard**: volume by day and topic, channel split, tokens, latency, feedback, health checks.
-- **Conversations / Citizens**: full transcripts with the exact prompt used, block or unblock, clear strikes, delete a citizen.
-- **Knowledge base**: curated fact blocks by topic and language; import CSV or JSON.
-- **National directory**: hotlines and institutions, with a verified flag the operator controls.
-- **Local services**: legal aid providers, hospitals, police desks and offices by region and district.
-- **Personas**: one persona per topic and language.
-- **Settings**: everything from language policy and reply length to OTP and strike limits, validated against a schema.
-
-## SMS commands
-
-| Command | Effect |
-| --- | --- |
-| `MSAADA` / `HELP` | Help text |
-| `LUGHA SW` / `LUGHA EN` / `LUGHA AUTO` | Reply language |
-| `JINA Asha` | Save a name |
-| `MKOA Mwanza` | Save a home region for nearby services |
-| `ACHA` / `STOP` | Pause replies |
-| `ANZA` / `START` | Resume |
-
-## Testing
-
-```bash
-php artisan test
-```
-
-Tests run on in-memory SQLite and mock the model client and SMS gateway.
-
-## Security notes
-
-- Inbound SMS webhook requires a shared secret and is rate limited per phone.
-- Web chat login uses an SMS one-time code (hashed, expiring, attempt-limited). Outside production, when SMS is not configured, the session opens directly so local testing works.
-- Settings only accept keys declared in `App\Support\Settings`.
-- TLS verification is on for every outbound call; the Gemini key travels in a header, not the URL.
-- Admin area uses session auth with role checks and login throttling.
-
-## Licence
-
-Proprietary. © Huru Digital Co. Ltd.
+Huru SMS, its source code, its content and its documentation are the property of Huru Digital Co. Ltd. All rights reserved.

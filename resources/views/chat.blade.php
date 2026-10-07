@@ -185,17 +185,24 @@
 <script>
 (() => {
     const $ = (id) => document.getElementById(id);
-    const csrf = document.querySelector('meta[name="csrf-token"]').content;
+    // The session (and therefore the CSRF token) is regenerated on login and logout,
+    // so the token is kept in a variable and refreshed from server responses.
+    let csrf = document.querySelector('meta[name="csrf-token"]').content;
+    const refreshCsrf = async () => {
+        try { const r = await fetch('/chat/session', { headers: { 'Accept': 'application/json' } }); const d = await r.json(); if (d.csrf) csrf = d.csrf; } catch (e) {}
+    };
     const state = { user: null, settings: null, phone: '', lang: 'sw', oldest: null, hasMore: false, filtering: false };
     const SUGGESTIONS = {
         sw: ['Nifanyeje kupata kitambulisho cha NIDA?', 'Haki zangu ni zipi nikikamatwa na polisi?', 'Dalili za malaria kwa mtoto ni zipi?', 'Nipande mahindi lini mkoa wangu?', 'Nieleze fractions kwa darasa la sita', 'Nianzeje biashara ndogo?'],
         en: ['How do I register for a NIDA ID?', 'What are my rights if the police arrest me?', 'What are malaria danger signs in a child?', 'When should I plant maize in my region?', 'Explain fractions for Standard Six', 'How do I start a small business?']
     };
 
-    const api = async (url, opts = {}) => {
+    const api = async (url, opts = {}, retried = false) => {
         const res = await fetch(url, Object.assign({ headers: Object.assign({ 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }, opts.body && !(opts.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}) }, opts));
         let data = {};
         try { data = await res.json(); } catch (e) {}
+        if (res.status === 419 && !retried) { await refreshCsrf(); return api(url, opts, true); }
+        if (data && data.csrf) csrf = data.csrf;
         if (!res.ok) { const msg = data.message || (data.errors && Object.values(data.errors)[0][0]) || ('Kosa ' + res.status); throw new Error(msg); }
         return data;
     };

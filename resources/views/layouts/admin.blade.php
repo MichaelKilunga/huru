@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Dashboard' }} – Huru Admin</title>
+    <title>{{ $title ?? 'Dashboard' }} – Huru SMS Admin</title>
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" href="/logo.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,7 +87,7 @@
 </head>
 <body>
 <aside class="sidebar" id="sidebar">
-    <a href="{{ route('admin.dashboard') }}" class="brand"><img src="/logo.svg" alt=""><span>Huru<small>Admin panel</small></span></a>
+    <a href="{{ route('admin.dashboard') }}" class="brand"><img src="/logo.svg" alt=""><span>Huru SMS<small>Admin panel</small></span></a>
     <nav class="nav">
         <div class="sec">Overview</div>
         <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'on' : '' }}">📊 Dashboard</a>

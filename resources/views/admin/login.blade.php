@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in – Huru Admin</title>
+    <title>Sign in – Huru SMS Admin</title>
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" href="/logo.svg" type="image/svg+xml">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -27,7 +27,7 @@
 <form class="box" method="POST" action="{{ route('admin.login.post') }}">
     @csrf
     <div class="logo">H</div>
-    <h1>Huru Admin</h1>
+    <h1>Huru SMS Admin</h1>
     <p>Sign in with your administrator account.</p>
     @if($errors->any())<div class="err">{{ $errors->first() }}</div>@endif
     @if(session('error'))<div class="err">{{ session('error') }}</div>@endif

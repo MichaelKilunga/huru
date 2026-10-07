@@ -24,7 +24,7 @@ class AdminUserSeeder extends Seeder
 
         if (! $admin) {
             User::query()->create([
-                'name' => env('ADMIN_NAME', 'Huru Admin'),
+                'name' => env('ADMIN_NAME', 'Huru SMS Admin'),
                 'email' => $email,
                 'password' => Hash::make($password),
                 'role' => User::ROLE_ADMIN,

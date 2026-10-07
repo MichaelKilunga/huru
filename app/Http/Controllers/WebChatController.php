@@ -80,6 +80,7 @@ class WebChatController extends Controller
                 'status' => 'success',
                 'otp_required' => false,
                 'user' => $this->userPayload($user),
+                'csrf' => csrf_token(), // session was regenerated, token rotated
             ]);
         }
 
@@ -138,7 +139,7 @@ class WebChatController extends Controller
         $user->forceFill(['otp_hash' => null, 'otp_expires_at' => null, 'otp_attempts' => 0])->save();
         $this->openSession($request, $user);
 
-        return response()->json(['status' => 'success', 'user' => $this->userPayload($user)]);
+        return response()->json(['status' => 'success', 'user' => $this->userPayload($user), 'csrf' => csrf_token()]);
     }
 
     public function messages(Request $request)
@@ -265,7 +266,7 @@ class WebChatController extends Controller
         $request->session()->forget(self::SESSION_KEY);
         $request->session()->regenerate();
 
-        return response()->json(['status' => 'success']);
+        return response()->json(['status' => 'success', 'csrf' => csrf_token()]);
     }
 
     // ------------------------------------------------------------------ helpers

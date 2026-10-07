@@ -1,4 +1,4 @@
-/* Huru service worker: app shell cached, API never cached, offline fallback page. */
+/* Huru SMS service worker: app shell cached, API never cached, offline fallback page. */
 const VERSION = 'huru-v1';
 const SHELL = ['/', '/chat', '/offline', '/logo.svg', '/manifest.json'];
 

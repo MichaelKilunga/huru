@@ -1,4 +1,4 @@
-@extends('layouts.public', ['title' => 'Sera ya Faragha', 'description' => 'Jinsi Huru inavyokusanya, kutumia na kulinda taarifa zako.'])
+@extends('layouts.public', ['title' => 'Sera ya Faragha', 'description' => 'Jinsi Huru SMS inavyokusanya, kutumia na kulinda taarifa zako.'])
 
 @section('content')
 <h1>Sera ya Faragha · Privacy Policy</h1>

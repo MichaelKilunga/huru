@@ -1,12 +1,12 @@
-@extends('layouts.public', ['title' => 'Vigezo na Masharti', 'description' => 'Vigezo na masharti ya kutumia huduma ya Huru kwa SMS na mtandaoni.'])
+@extends('layouts.public', ['title' => 'Vigezo na Masharti', 'description' => 'Vigezo na masharti ya kutumia huduma ya Huru SMS kwa SMS na mtandaoni.'])
 
 @section('content')
 <h1>Vigezo na Masharti · Terms and Conditions</h1>
 <p class="updated">Ilisasishwa: {{ date('d F Y') }}</p>
 
 <h2>1. Huduma</h2>
-<p>Huru ni huduma ya maelezo na mwongozo wa jumla inayotolewa na Huru Digital Co. Ltd. kwa SMS (shortcode 15054, neno HURU) na kupitia mtandao. Huru hujibu maswali ya kila siku kuhusu maisha Tanzania: sheria, afya, kilimo, elimu, huduma za serikali, fedha, ajira na mada nyingine.</p>
-<p><em>Huru is a general information and guidance service provided by Huru Digital Co. Ltd. via SMS (shortcode 15054, keyword HURU) and the web.</em></p>
+<p>Huru SMS ni huduma ya maelezo na mwongozo wa jumla inayotolewa na Huru Digital Co. Ltd. kwa SMS (shortcode 15054, neno HURU) na kupitia mtandao. Huru SMS hujibu maswali ya kila siku kuhusu maisha Tanzania: sheria, afya, kilimo, elimu, huduma za serikali, fedha, ajira na mada nyingine.</p>
+<p><em>Huru SMS is a general information and guidance service provided by Huru Digital Co. Ltd. via SMS (shortcode 15054, keyword HURU) and the web.</em></p>
 
 <h2>2. Si ushauri wa kitaalamu</h2>
 <p>Majibu ni maelezo ya jumla yanayotolewa kiotomatiki kwa msaada wa teknolojia na maarifa yaliyokusanywa. Si ushauri wa kisheria, wa kitabibu, wa kifedha wala uwakilishi wa aina yoyote. Kwa maamuzi muhimu, thibitisha na ofisi, mtaalamu au mamlaka husika. Kwa dharura piga 112 (polisi), 114 (zimamoto), 115 (gari la wagonjwa) au 116 (msaada kwa mtoto).</p>
@@ -20,7 +20,7 @@
 </ul>
 
 <h2>4. Gharama</h2>
-<p>SMS kwenda 15054 hutozwa na mtandao wako wa simu kwa viwango vya kawaida vya SMS isipokuwa ikitangazwa vinginevyo. Web chat hutumia bando la intaneti la mtumiaji. Huru haitozi ada ya ziada kwa sasa.</p>
+<p>SMS kwenda 15054 hutozwa na mtandao wako wa simu kwa viwango vya kawaida vya SMS isipokuwa ikitangazwa vinginevyo. Web chat hutumia bando la intaneti la mtumiaji. Huru SMS haitozi ada ya ziada kwa sasa.</p>
 
 <h2>5. Taarifa zako</h2>
 <p>Tunahifadhi namba yako ya simu, maswali na majibu ili kuendeleza mazungumzo na kuboresha huduma. Soma <a href="{{ route('legal.privacy') }}">Sera ya Faragha</a> kwa maelezo kamili. Tuma ACHA kwa SMS kusitisha majibu wakati wowote.</p>

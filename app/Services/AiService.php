@@ -2,81 +2,58 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use App\Services\PromptEngine;
+use App\Services\Ai\LlmClient;
+use App\Support\Settings;
 
+/**
+ * Thin orchestration between the prompt engine and the model client.
+ */
 class AiService
 {
-    public function generateResponse(string $prompt): string
-    {
-        $result = $this->callGemini($prompt);
-        return $result['text'];
+    public function __construct(
+        private readonly PromptEngine $engine,
+        private readonly LlmClient $client,
+    ) {
     }
 
-    public function generateContextualResponse(string $userQuery, string $language = 'sw'): array
+    /**
+     * @param  array  $ctx  See PromptEngine::build()
+     * @return array{status:string,text:?string,model:string,tokens:array,latency_ms:int,error:?string,system:string,knowledge:\Illuminate\Support\Collection}
+     */
+    public function answer(array $ctx): array
     {
-        $engine = new PromptEngine();
-        $prompt = $engine->build($userQuery, $language);
+        $built = $this->engine->build($ctx);
 
-        return $this->callGemini($prompt);
-    }
+        $result = $this->client->generate($built['system'], $built['turns'], [
+            'model' => Settings::get('ai_model'),
+            'temperature' => Settings::float('ai_temperature'),
+            'max_tokens' => Settings::int('ai_max_tokens'),
+        ]);
 
-    private function callGemini(string $prompt, ?float $temp = null, ?int $maxTokens = null): array
-    {
-        try {
-            $temp = $temp ?? (float) (\App\Models\SystemSetting::where('key', 'ai_temperature')->value('value') ?? 0.7);
-            $maxTokens = $maxTokens ?? (int) (\App\Models\SystemSetting::where('key', 'ai_max_tokens')->value('value') ?? 8000);
-
-            $apiKey = config('services.gemini.key');
-
-            if (empty($apiKey)) {
-                Log::critical('Gemini API Key missing.');
-                return ['text' => 'System error: AI unavailable.', 'tokens' => null];
-            }
-
-            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=' . $apiKey;
-
-            $response = Http::withoutVerifying()->withHeaders([
-                'Content-Type' => 'application/json',
-                'X-Goog-Api-Key' => $apiKey,
-            ])->retry(3, 1000)->post($url, [
-                'contents' => [['parts' => [['text' => $prompt]]]],
-                'generationConfig' => [
-                    'temperature' => $temp,
-                    'maxOutputTokens' => $maxTokens,
-                ]
-            ]);
-
-            if (!$response->successful()) {
-                throw new \Exception('Gemini request failed: ' . $response->status());
-            }
-
-            $data = $response->json();
-            
-            $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
-            $finishReason = $data['candidates'][0]['finishReason'] ?? null;
-
-            if (!$text && $finishReason === 'SAFETY') {
-                return [
-                    'text' => 'BANNED_CONTENT_DETECTED',
-                    'tokens' => $data['usageMetadata'] ?? null,
-                    'model' => 'gemini-flash-lite-latest'
-                ];
-            }
-
-            return [
-                'text' => trim($text ?? 'Samahani, sikuelewa.'),
-                'tokens' => $data['usageMetadata'] ?? null,
-                'model' => 'gemini-flash-lite-latest'
-            ];
-
-        } catch (\Throwable $e) {
-            Log::error('AI Service Error: ' . $e->getMessage());
-            return [
-                'text' => 'Samahani, tafadhali jaribu tena baada ya muda mfupi.',
-                'tokens' => null
-            ];
+        if ($result['status'] === LlmClient::STATUS_OK) {
+            $result['text'] = $this->clean($result['text']);
         }
+
+        $result['system'] = $built['system'];
+        $result['knowledge'] = $built['knowledge'];
+
+        return $result;
+    }
+
+    /** Strip markdown the model may still emit, since SMS cannot render it. */
+    private function clean(string $text): string
+    {
+        $text = preg_replace('/\*\*?/', '', $text);
+        $text = preg_replace('/^#{1,6}\s*/m', '', $text);
+        $text = preg_replace('/`+/', '', $text);
+        $text = preg_replace('/^\s*[-•]\s+/m', '- ', $text);
+        $text = preg_replace('/\n{3,}/', "\n\n", $text);
+
+        return trim($text);
+    }
+
+    public function isConfigured(): bool
+    {
+        return $this->client->isConfigured();
     }
 }

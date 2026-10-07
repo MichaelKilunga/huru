@@ -1,30 +1,6 @@
-# ============================================================
-# HuruLearn – robots.txt
-# https://hurulearn.hurudigital.co.tz
-# ============================================================
-
 User-agent: *
-# Allow all public content
 Allow: /
-Allow: /terms-and-conditions
-Allow: /privacy-policy
-
-# Disallow private / admin areas
-Disallow: /admin/
 Disallow: /admin
+Disallow: /chat/
 Disallow: /api/
-Disallow: /api
-
-# Disallow internal Laravel routes
-Disallow: /_ignition/
-Disallow: /telescope/
-Disallow: /horizon/
-
-# Disallow query-string duplicates
-Disallow: /*?
-
-# Crawl delay for polite bots (in seconds)
-Crawl-delay: 5
-
-# ---- Sitemap ----
-Sitemap: https://hurulearn.hurudigital.co.tz/sitemap.xml
+Sitemap: /sitemap.xml

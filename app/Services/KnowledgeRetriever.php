@@ -31,6 +31,10 @@ class KnowledgeRetriever
         'this', 'that', 'these', 'with', 'from', 'about', 'please', 'help', 'need', 'want', 'explain', 'tell', 'describe',
         'define', 'have', 'has', 'been', 'was', 'were', 'will', 'not', 'but', 'or', 'also', 'there', 'here', 'now', 'a', 'an',
         'am', 'be', 'on', 'at', 'by', 'as', 'if', 'so', 'get', 'know', 'any', 'some', 'much', 'many',
+        // Topic-level words that appear in almost every entry of a domain and therefore carry no signal.
+        'sheria', 'kisheria', 'haki', 'legal', 'law', 'laws', 'rights', 'right', 'huduma', 'service', 'services',
+        'serikali', 'government', 'tanzania', 'nchi', 'country', 'mwananchi', 'wananchi', 'citizen', 'citizens',
+        'ofisi', 'office', 'taarifa', 'information', 'maelezo', 'swali', 'question',
     ];
 
     /**

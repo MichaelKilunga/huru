@@ -47,14 +47,14 @@ class KnowledgeSeeder extends Seeder
                 'title' => 'Umiliki wa ardhi na migogoro ya ardhi',
                 'category' => 'legal', 'language' => 'sw',
                 'content' => 'Ardhi yote Tanzania ni mali ya umma iliyo chini ya Rais kama mdhamini. Kuna ardhi ya kawaida (General), ardhi ya kijiji (Village) na ardhi ya hifadhi (Reserved). Mwananchi anapata Hati ya Haki Miliki (Granted Right of Occupancy) kwa ardhi ya kawaida kupitia Ofisi ya Ardhi ya Halmashauri/Mkoa, au Hati ya Hakimiliki ya Kimila (CCRO) kwa ardhi ya kijiji kupitia Halmashauri ya Kijiji. Wanawake wana haki sawa na wanaume kumiliki na kurithi ardhi. Migogoro ya ardhi huanzia Baraza la Ardhi la Kijiji, kisha Baraza la Kata, kisha Baraza la Ardhi na Nyumba la Wilaya (DLHT), kisha Mahakama Kuu Kitengo cha Ardhi. Kabla ya kununua ardhi hakiki hati na umiliki Ofisi ya Ardhi na kwa Mtendaji wa Kijiji/Mtaa.',
-                'keywords' => ['ardhi', 'hati', 'umiliki', 'ccro', 'baraza la ardhi', 'mgogoro wa ardhi', 'kununua ardhi', 'kiwanja', 'shamba'],
+                'keywords' => ['ardhi', 'hati', 'umiliki', 'ccro', 'baraza la ardhi', 'mgogoro wa ardhi', 'kununua ardhi', 'kiwanja', 'shamba', 'mashamba', 'kudhulumiwa', 'dhuluma', 'kunyang\'anywa', 'mpaka', 'mipaka', 'kuvamiwa', 'eneo', 'mali', 'hatimiliki', 'kurithi ardhi', 'wakulima'],
                 'source' => 'Sheria ya Ardhi Sura 113; Sheria ya Ardhi ya Vijiji Sura 114; Sheria ya Mahakama za Ardhi Sura 216',
             ],
             [
                 'title' => 'Land ownership and land disputes',
                 'category' => 'legal', 'language' => 'en',
                 'content' => 'All land in Tanzania is public land vested in the President as trustee. Categories: General land, Village land and Reserved land. Citizens obtain a Granted Right of Occupancy (General land) through the District/Regional Land Office, or a Certificate of Customary Right of Occupancy (CCRO) for village land through the Village Council. Women have equal rights to own and inherit land. Disputes go from the Village Land Council to the Ward Tribunal, then the District Land and Housing Tribunal (DLHT), then the High Court Land Division. Before buying land, verify the title at the Land Office and with the Village/Mtaa Executive Officer.',
-                'keywords' => ['land', 'title deed', 'ownership', 'ccro', 'land tribunal', 'land dispute', 'buying land', 'plot'],
+                'keywords' => ['land', 'title deed', 'ownership', 'ccro', 'land tribunal', 'land dispute', 'buying land', 'plot', 'farm', 'grabbed', 'grabbing', 'boundary', 'encroachment', 'trespass', 'inherit land', 'village land'],
                 'source' => 'Land Act Cap 113; Village Land Act Cap 114; Land Disputes Courts Act Cap 216',
             ],
             [

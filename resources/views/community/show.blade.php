@@ -1,407 +1,69 @@
-<!DOCTYPE html>
-<html lang="sw">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $thread->title }} – Jamii ya HuruLearn</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --gov-green: #15803d;
-            --gov-green-dark: #166534;
-            --gov-blue: #1d4ed8;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #0f172a;
-            --text-muted: #475569;
-            --border-color: #cbd5e1;
-        }
+@extends('layouts.public', ['title' => $thread->title, 'description' => \Illuminate\Support\Str::limit($thread->description ?? $thread->title, 150), 'robots' => 'noindex, follow'])
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+@section('content')
+<style>
+    .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+    .top p{color:var(--muted);font-size:.9rem}
+    .btn{display:inline-flex;align-items:center;gap:6px;background:var(--green);color:#fff;text-decoration:none;font-weight:700;padding:9px 13px;border-radius:8px;border:none;font:inherit;cursor:pointer;font-size:.88rem}
+    .btn.alt{background:#fff;color:var(--blue);border:2px solid var(--blue)}
+    .btn.muted{background:#fff;color:var(--muted);border:1px solid var(--border)}
+    .members{font-size:.8rem;color:var(--muted);margin-bottom:14px}
+    .posts{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+    .post{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:#fff}
+    .post.mine{border-color:var(--green-border);background:var(--green-bg)}
+    .post .who{font-size:.78rem;color:var(--muted);font-weight:600;margin-bottom:4px;display:flex;justify-content:space-between;gap:8px}
+    .post .body{font-size:.95rem;white-space:pre-wrap}
+    .compose textarea{width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:8px;font:inherit;margin-bottom:8px;resize:vertical}
+    .alert{padding:10px 12px;border-radius:8px;font-size:.88rem;font-weight:600;margin-bottom:12px}
+    .alert-err{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+    .alert-ok{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green-dark)}
+    .notice{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;padding:10px 12px;border-radius:8px;font-size:.88rem}
+    form.inline{display:inline}
+</style>
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text-main);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* Top Nav */
-        nav {
-            padding: 0.9rem 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #ffffff;
-            border-bottom: 1px solid var(--border-color);
-            z-index: 100;
-        }
-
-        .nav-left {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .back-btn {
-            color: var(--gov-blue);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            font-size: 0.9rem;
-            font-weight: 700;
-        }
-
-        .thread-info h1 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: var(--gov-green-dark);
-        }
-
-        .thread-info p {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .btn-leave-thread {
-            background: none;
-            border: 1px solid #fca5a5;
-            background: #fee2e2;
-            color: #991b1b;
-            font-size: 0.8rem;
-            font-weight: 700;
-            padding: 0.35rem 0.75rem;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-leave-thread:hover {
-            background: #fca5a5;
-        }
-
-        .chat-container {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 280px;
-            background: #ffffff;
-            border-right: 1px solid var(--border-color);
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.75rem;
-        }
-
-        .sidebar-section h4 {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--gov-green-dark);
-            margin-bottom: 0.75rem;
-            font-weight: 800;
-        }
-
-        .sidebar-section p {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            line-height: 1.5;
-        }
-
-        .member-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .member-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 0.88rem;
-            color: var(--text-main);
-            font-weight: 600;
-        }
-
-        .avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            background: var(--gov-green);
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 0.85rem;
-        }
-
-        /* Messages Area */
-        .main-chat {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #f8fafc;
-        }
-
-        .messages-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-            scroll-behavior: smooth;
-        }
-
-        .message {
-            display: flex;
-            gap: 0.85rem;
-            max-width: 82%;
-        }
-
-        .message.own {
-            align-self: flex-end;
-            flex-direction: row-reverse;
-        }
-
-        .msg-content {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .msg-bubble {
-            padding: 0.8rem 1.1rem;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-        }
-
-        .message.own .msg-bubble {
-            background: var(--gov-green);
-            color: #ffffff;
-            border: none;
-        }
-
-        .msg-meta {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            display: flex;
-            gap: 0.6rem;
-        }
-
-        .message.own .msg-meta {
-            justify-content: flex-end;
-            color: var(--text-muted);
-        }
-
-        /* Input Area */
-        .input-area {
-            padding: 1rem 1.5rem;
-            background: #ffffff;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .input-wrapper {
-            max-width: 900px;
-            margin: 0 auto;
-            display: flex;
-            gap: 0.75rem;
-            background: #ffffff;
-            border: 1.5px solid var(--border-color);
-            padding: 0.5rem 0.75rem;
-            border-radius: 10px;
-            align-items: center;
-        }
-
-        .input-wrapper:focus-within {
-            border-color: var(--gov-green);
-        }
-
-        .input-wrapper textarea {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-main);
-            outline: none;
-            padding: 0.4rem;
-            font-size: 0.95rem;
-            resize: none;
-            max-height: 120px;
-            font-family: inherit;
-        }
-
-        .send-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            background: var(--gov-green);
-            color: #ffffff;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .send-btn:hover {
-            background: var(--gov-green-dark);
-        }
-
-        @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .message { max-width: 95%; }
-            .messages-list { padding: 1rem; }
-        }
-    </style>
-</head>
-<body>
-    <nav>
-        <div class="nav-left">
-            <a href="{{ route('community.index') }}" class="back-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                Jamii
-            </a>
-            <div class="thread-info">
-                <h1>{{ $thread->title }}</h1>
-                <p>{{ $members->count() }} Wanachama · {{ $thread->is_private ? 'Binafsi' : 'Umma' }}</p>
-            </div>
-        </div>
-        <div class="nav-right">
-            <form action="{{ route('community.leave', $thread->slug) }}" method="POST">
-                @csrf
-                <button type="submit" class="btn-leave-thread">Ondoka Kwenye Majadiliano</button>
-            </form>
-        </div>
-    </nav>
-
-    <div class="chat-container">
-        <aside class="sidebar">
-            <div class="sidebar-section">
-                <h4>Maelezo</h4>
-                <p>{{ $thread->description ?? 'Hakuna maelezo yaliyowekwa.' }}</p>
-            </div>
-            <div class="sidebar-section">
-                <h4>Wanachama</h4>
-                <div class="member-list">
-                    @foreach($members as $member)
-                    <div class="member-item">
-                        <div class="avatar">{{ strtoupper(substr($member->name ?? $member->phone_number, 0, 1)) }}</div>
-                        <span>{{ $member->name ?? $member->phone_number }}</span>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-        </aside>
-
-        <main class="main-chat">
-            <div class="messages-list" id="messagesList">
-                @foreach($posts as $post)
-                <div class="message {{ $post->user_id == $user->id ? 'own' : '' }}">
-                    <div class="msg-content">
-                        @if($post->user_id != $user->id)
-                        <div class="msg-meta" style="margin-bottom: 0.2rem;">
-                            <span style="font-weight: 700; color: var(--gov-blue);">{{ $post->user->name ?? $post->user->phone_number }}</span>
-                        </div>
-                        @endif
-                        <div class="msg-bubble">{{ $post->content }}</div>
-                        <div class="msg-meta">{{ $post->created_at->format('H:i') }}</div>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-
-            <div class="input-area">
-                <form id="chatForm" class="input-wrapper">
-                    @csrf
-                    <textarea id="messageInput" placeholder="Andika ujumbe wako hapa..." rows="1"></textarea>
-                    <button type="submit" class="send-btn" title="Tuma Ujumbe">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-                    </button>
-                </form>
-            </div>
-        </main>
+<div class="top">
+    <div>
+        <h1 style="font-size:1.4rem">{{ $thread->title }}</h1>
+        <p>{{ $thread->description }}</p>
     </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a class="btn alt" href="{{ route('community.index') }}">← Mijadala</a>
+        @if($isMember && !$thread->is_system)
+            <form class="inline" method="POST" action="{{ route('community.leave', $thread) }}">@csrf<button class="btn muted" type="submit">Ondoka</button></form>
+        @elseif(!$isMember && !$thread->is_private)
+            <form class="inline" method="POST" action="{{ route('community.join', $thread) }}">@csrf<button class="btn" type="submit">Jiunge</button></form>
+        @endif
+    </div>
+</div>
 
-    <script>
-        const messagesList = document.getElementById('messagesList');
-        const chatForm = document.getElementById('chatForm');
-        const messageInput = document.getElementById('messageInput');
+<div class="members">Wanachama {{ $members->count() }}: {{ $members->take(8)->map->displayName()->implode(', ') }}{{ $members->count() > 8 ? ' na wengine' : '' }}</div>
 
-        // Scroll to bottom
-        messagesList.scrollTop = messagesList.scrollHeight;
+@if(session('error'))<div class="alert alert-err">{{ session('error') }}</div>@endif
+@if(session('success'))<div class="alert alert-ok">{{ session('success') }}</div>@endif
+@if($errors->any())<div class="alert alert-err">{{ $errors->first() }}</div>@endif
+@if($thread->is_system)<div class="notice">Huu ni mjadala rasmi. Ujumbe huonekana baada ya kuhakikiwa na timu ya {{ $settings['app_name'] }}.</div>@endif
 
-        // Auto-expand textarea
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        });
+<div class="posts">
+    @forelse($posts as $post)
+        <div class="post {{ $post->user_id === $user->id ? 'mine' : '' }}">
+            <div class="who"><span>{{ $post->user?->displayName() ?? 'Mwananchi' }}</span><span>{{ $post->created_at->diffForHumans() }}</span></div>
+            <div class="body">{{ $post->content }}</div>
+        </div>
+    @empty
+        <p style="color:var(--muted)">Hakuna ujumbe bado. Kuwa wa kwanza kuandika.</p>
+    @endforelse
+</div>
+{{ $posts->links('pagination.simple') }}
 
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const content = messageInput.value.trim();
-            if(!content) return;
-
-            messageInput.value = '';
-            messageInput.style.height = 'auto';
-
-            // Optimistic UI update
-            const tempId = Date.now();
-            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            
-            const msgHtml = `
-                <div class="message own" id="temp-${tempId}">
-                    <div class="msg-content">
-                        <div class="msg-bubble">${content}</div>
-                        <div class="msg-meta">${time} · Inatuma...</div>
-                    </div>
-                </div>
-            `;
-            messagesList.insertAdjacentHTML('beforeend', msgHtml);
-            messagesList.scrollTop = messagesList.scrollHeight;
-
-            try {
-                const response = await fetch("{{ route('community.posts.store', $thread->slug) }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-                    },
-                    body: JSON.stringify({ content })
-                });
-
-                if(response.ok) {
-                    const data = await response.json();
-                    const tempMsg = document.getElementById(`temp-${tempId}`);
-                    if(tempMsg) {
-                        tempMsg.querySelector('.msg-meta').innerText = time;
-                    }
-                } else {
-                    alert('Imefeli kutuma ujumbe.');
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Hitilafu imetokea.');
-            }
-        });
-    </script>
-</body>
-</html>
+@if($isMember)
+<div class="compose">
+    <form method="POST" action="{{ route('community.posts.store', $thread) }}">
+        @csrf
+        <textarea name="content" rows="3" placeholder="Andika ujumbe wako..." required minlength="2" maxlength="3000"></textarea>
+        <button class="btn" type="submit">Tuma</button>
+    </form>
+</div>
+@else
+    <p style="color:var(--muted);font-size:.9rem">Jiunge na mjadala huu ili kuandika.</p>
+@endif
+@endsection

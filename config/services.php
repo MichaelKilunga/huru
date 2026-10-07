@@ -6,12 +6,6 @@ return [
     |--------------------------------------------------------------------------
     | Third Party Services
     |--------------------------------------------------------------------------
-    |
-    | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
-    |
     */
 
     'postmark' => [
@@ -34,14 +28,22 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+
+    // Google Gemini (model is chosen in the admin settings)
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
+        'url' => env('GEMINI_URL', 'https://generativelanguage.googleapis.com/v1beta/models'),
+        'timeout' => env('GEMINI_TIMEOUT', 30),
     ],
 
+    // Africa's Talking SMS
     'at' => [
         'username' => env('AT_USERNAME'),
         'api_key' => env('AT_API_KEY'),
         'from' => env('AT_FROM'),
+        'webhook_secret' => env('AT_WEBHOOK_SECRET'),
+        // When true, inbound messages without the keyword are ignored (shared short codes).
+        'require_keyword' => env('AT_REQUIRE_KEYWORD', false),
     ],
 
 ];

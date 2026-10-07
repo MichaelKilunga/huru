@@ -3,24 +3,36 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\Settings;
 use Illuminate\Http\Request;
-
-use App\Models\SystemSetting;
 
 class SettingController extends Controller
 {
     public function index()
     {
-        $settings = SystemSetting::all()->pluck('value', 'key');
-        return view('admin.settings', compact('settings'));
+        return view('admin.settings', [
+            'groups' => Settings::groups(),
+            'values' => Settings::all(),
+        ]);
     }
 
     public function update(Request $request)
     {
-        foreach ($request->except('_token') as $key => $value) {
-            SystemSetting::updateOrCreate(['key' => $key], ['value' => $value]);
+        $rules = Settings::rules();
+
+        // Unchecked checkboxes are absent from the request: treat as "0".
+        foreach (Settings::schema() as $key => $def) {
+            if ($def['type'] === 'boolean' && ! $request->has($key)) {
+                $request->merge([$key => '0']);
+            }
         }
 
-        return redirect()->back()->with('success', 'Settings updated successfully.');
+        $data = $request->validate($rules);
+
+        foreach ($data as $key => $value) {
+            Settings::set($key, $value);
+        }
+
+        return back()->with('success', 'Settings saved.');
     }
 }

@@ -3,68 +3,87 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
 use App\Models\PromptTemplate;
+use App\Services\TopicClassifier;
+use Illuminate\Http\Request;
 
 class PromptTemplateController extends Controller
 {
     public function index()
     {
-        $templates = PromptTemplate::latest()->get();
+        $templates = PromptTemplate::query()->orderBy('category')->orderBy('language')->get();
+
         return view('admin.templates.index', compact('templates'));
+    }
+
+    public function create()
+    {
+        return view('admin.templates.form', ['template' => new PromptTemplate(['category' => 'general', 'language' => 'sw', 'is_active' => true])]);
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name' => 'required|unique:prompt_templates',
-            'template' => 'required',
-            'temperature' => 'required|numeric|min:0|max:2',
-            'max_tokens' => 'required|integer|min:10',
-            'tone' => 'required|string',
-            'language' => 'required|in:en,sw',
-        ]);
+        $data = $this->validated($request);
+        PromptTemplate::query()->create($data);
+        $this->ensureSingleActive($data);
 
-        PromptTemplate::create($data);
-
-        return redirect()->back()->with('success', 'Template created.');
+        return redirect()->route('admin.templates.index')->with('success', 'Template created.');
     }
 
     public function edit(PromptTemplate $template)
     {
-        return view('admin.templates.edit', compact('template'));
+        return view('admin.templates.form', compact('template'));
     }
 
     public function update(Request $request, PromptTemplate $template)
     {
-        $data = $request->validate([
-            'name' => 'required|unique:prompt_templates,name,' . $template->id,
-            'template' => 'required',
-            'temperature' => 'required|numeric|min:0|max:2',
-            'max_tokens' => 'required|integer|min:10',
-            'tone' => 'required|string',
-            'language' => 'required|in:en,sw',
-        ]);
-
+        $data = $this->validated($request, $template);
         $template->update($data);
+        $this->ensureSingleActive($data, $template->id);
 
         return redirect()->route('admin.templates.index')->with('success', 'Template updated.');
+    }
+
+    public function toggle(PromptTemplate $template)
+    {
+        $template->update(['is_active' => ! $template->is_active]);
+        if ($template->is_active) {
+            $this->ensureSingleActive($template->only('category', 'language'), $template->id);
+        }
+
+        return back()->with('success', 'Template ' . ($template->is_active ? 'activated' : 'deactivated') . '.');
     }
 
     public function destroy(PromptTemplate $template)
     {
         $template->delete();
+
         return redirect()->route('admin.templates.index')->with('success', 'Template deleted.');
     }
 
-    public function toggle(PromptTemplate $template)
+    private function validated(Request $request, ?PromptTemplate $existing = null): array
     {
-        $template->update(['is_active' => !$template->is_active]);
-        
-        // Ensure only one template is active per language if needed? 
-        // For now just toggle.
-        
-        return redirect()->back()->with('success', 'Template status updated.');
+        return $request->validate([
+            'name' => 'required|string|max:80|unique:prompt_templates,name' . ($existing ? ',' . $existing->id : ''),
+            'category' => 'required|in:' . implode(',', TopicClassifier::keys()),
+            'language' => 'required|in:sw,en',
+            'template' => 'required|string|min:20|max:4000',
+            'is_active' => 'sometimes|boolean',
+        ]) + ['is_active' => $request->boolean('is_active')];
+    }
+
+    /** Only one active persona per (category, language). */
+    private function ensureSingleActive(array $data, ?int $keepId = null): void
+    {
+        if (empty($data['is_active']) && $keepId === null) {
+            return;
+        }
+        $keep = $keepId ?? PromptTemplate::query()->where('name', $data['name'])->value('id');
+        PromptTemplate::query()
+            ->where('category', $data['category'])
+            ->where('language', $data['language'])
+            ->where('id', '!=', $keep)
+            ->update(['is_active' => false]);
+        cache()->forget('huru.templates.active');
     }
 }

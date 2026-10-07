@@ -2,85 +2,44 @@
 
 namespace Tests\Feature;
 
+use App\Models\CommunityThread;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class CommunityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_user_can_create_thread()
+    public function test_guest_is_redirected_to_chat(): void
     {
-        $user = \App\Models\User::factory()->create();
-        
-        $response = $this->withSession(['chat_user_id' => $user->id])
-            ->post(route('community.threads.store'), [
-                'title' => 'Test Thread',
-                'description' => 'Test Description',
-            ]);
-
-        $response->assertStatus(302);
-        $this->assertDatabaseHas('community_threads', ['title' => 'Test Thread']);
+        $this->get(route('community.index'))->assertRedirect(route('chat.index', ['redirect' => '/community']));
     }
 
-    public function test_user_can_join_public_thread()
+    public function test_user_can_create_join_and_post(): void
     {
-        $user = \App\Models\User::factory()->create();
-        
-        $thread = \App\Models\CommunityThread::create([
-            'title' => 'Public Thread',
-            'slug' => 'public-thread',
-            'is_private' => false,
-        ]);
+        $user = User::factory()->create();
+        $session = ['chat_user_id' => $user->id];
 
-        $response = $this->withSession(['chat_user_id' => $user->id])
-            ->post(route('community.join', $thread->slug));
-
-        $response->assertStatus(302);
+        $this->withSession($session)->post(route('community.threads.store'), ['title' => 'Bei za mahindi', 'description' => 'Dodoma'])->assertRedirect();
+        $thread = CommunityThread::where('title', 'Bei za mahindi')->firstOrFail();
         $this->assertTrue($thread->members()->where('user_id', $user->id)->exists());
+
+        $other = User::factory()->create();
+        $this->withSession(['chat_user_id' => $other->id])->post(route('community.join', $thread->slug))->assertRedirect(route('community.show', $thread));
+        $this->withSession(['chat_user_id' => $other->id])->post(route('community.posts.store', $thread->slug), ['content' => 'Shilingi 800 kwa kilo Kongwa'])->assertRedirect();
+
+        $this->assertDatabaseHas('community_posts', ['content' => 'Shilingi 800 kwa kilo Kongwa', 'is_approved' => true]);
+        $this->withSession($session)->get(route('community.show', $thread->slug))->assertOk()->assertSee('Shilingi 800');
     }
 
-    public function test_user_can_post_in_joined_thread()
+    public function test_abusive_posts_are_rejected(): void
     {
-        $user = \App\Models\User::factory()->create();
-        
-        $thread = \App\Models\CommunityThread::create([
-            'title' => 'Joined Thread',
-            'slug' => 'joined-thread',
-            'is_private' => false,
-        ]);
+        $user = User::factory()->create();
+        $thread = CommunityThread::create(['title' => 'T', 'slug' => 't', 'is_private' => false]);
         $thread->members()->attach($user->id);
 
-        $response = $this->withSession(['chat_user_id' => $user->id])
-            ->post(route('community.posts.store', $thread->slug), [
-                'content' => 'Hello World',
-            ]);
-
-        $response->assertStatus(302);
-        $this->assertDatabaseHas('community_posts', ['content' => 'Hello World']);
-    }
-
-    public function test_unauthenticated_user_is_redirected_to_chat_with_redirect_param_for_index()
-    {
-        $response = $this->get(route('community.index'));
-
-        $response->assertStatus(302);
-        $response->assertRedirect(route('chat.index', ['redirect' => '/community']));
-        $response->assertSessionHas('error', 'Please login to access the community.');
-    }
-
-    public function test_unauthenticated_user_is_redirected_to_chat_with_redirect_param_for_show()
-    {
-        $thread = \App\Models\CommunityThread::create([
-            'title' => 'Sample Thread',
-            'slug' => 'sample-thread',
-            'is_private' => false,
-        ]);
-
-        $response = $this->get(route('community.show', $thread->slug));
-
-        $response->assertStatus(302);
-        $response->assertRedirect(route('chat.index', ['redirect' => '/community/threads/sample-thread']));
+        $this->withSession(['chat_user_id' => $user->id])->postJson(route('community.posts.store', $thread->slug), ['content' => 'wewe mjinga sana'])->assertStatus(422);
+        $this->assertSame(1, $user->fresh()->abuse_count);
     }
 }

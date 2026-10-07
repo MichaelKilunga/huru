@@ -7,11 +7,12 @@ use App\Models\User;
 use App\Services\ConversationService;
 use App\Services\SmsService;
 use App\Support\Phone;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 
-class ProcessIncomingSms implements ShouldQueue
+class ProcessIncomingSms implements ShouldQueue, ShouldBeUnique
 {
     use Queueable;
 

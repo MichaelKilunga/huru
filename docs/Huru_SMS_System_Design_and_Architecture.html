@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Huru SMS – System Design and Architecture</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm 20mm 18mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, Helvetica, sans-serif; color: #0f172a; font-size: 10.5pt; line-height: 1.45; margin: 0; }
+  h1 { font-size: 22pt; color: #166534; margin: 0 0 4pt; }
+  h2 { font-size: 14pt; color: #166534; border-bottom: 2px solid #15803d; padding-bottom: 3pt; margin: 18pt 0 8pt; page-break-after: avoid; }
+  h3 { font-size: 11.5pt; color: #1e40af; margin: 12pt 0 4pt; page-break-after: avoid; }
+  p { margin: 0 0 6pt; }
+  ul, ol { margin: 0 0 7pt 18pt; padding: 0; }
+  li { margin-bottom: 2pt; }
+  table { border-collapse: collapse; width: 100%; margin: 5pt 0 9pt; font-size: 9.5pt; }
+  th, td { border: 1px solid #cbd5e1; padding: 4pt 6pt; vertical-align: top; text-align: left; }
+  th { background: #f0fdf4; color: #166534; font-weight: 700; }
+  tr { page-break-inside: avoid; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: 9pt; background: #f1f5f9; padding: 1pt 3pt; border-radius: 3px; }
+  .cover { height: 240mm; display: flex; flex-direction: column; justify-content: center; page-break-after: always; }
+  .cover .badge { display: inline-block; background: #15803d; color: #fff; font-weight: 700; padding: 5pt 12pt; border-radius: 999px; font-size: 10pt; margin-bottom: 16pt; width: fit-content; }
+  .cover h1 { font-size: 32pt; }
+  .cover .sub { font-size: 14pt; color: #475569; margin: 6pt 0 26pt; }
+  .cover .meta { border-top: 2px solid #15803d; padding-top: 12pt; font-size: 11pt; }
+  .cover .meta div { margin-bottom: 4pt; }
+  .box { border: 1.5px solid #15803d; background: #f0fdf4; border-radius: 8px; padding: 8pt 11pt; margin: 6pt 0 10pt; }
+  .box.blue { border-color: #1d4ed8; background: #eff6ff; }
+  .fig { margin: 8pt 0 12pt; page-break-inside: avoid; text-align: center; }
+  .fig svg { width: 100%; height: auto; max-height: 215mm; }
+  .fig .cap { font-size: 9pt; color: #475569; margin-top: 4pt; text-align: center; }
+  .shots { display: flex; flex-wrap: wrap; gap: 8pt; justify-content: center; margin: 6pt 0 10pt; }
+  .shot { page-break-inside: avoid; text-align: center; }
+  .shot img { border: 1px solid #cbd5e1; border-radius: 4px; max-width: 100%; max-height: 225mm; width: auto; height: auto; }
+  .shot.half { flex: 0 0 48%; max-width: 48%; }
+  .shot.third { flex: 0 0 31%; max-width: 31%; }
+  .shot.phone img { max-height: 190mm; }
+  .shot .cap { font-size: 9pt; color: #475569; margin-top: 3pt; }
+  .muted { color: #475569; font-size: 9pt; }
+  .pb { page-break-before: always; }
+  .docfoot { margin-top: 24pt; padding-top: 8pt; border-top: 1px solid #cbd5e1; text-align: center; font-size: 9pt; color: #64748b; }
+  /* SVG diagram styles */
+  svg text { font-family: "Segoe UI", Arial, sans-serif; }
+  .n { fill: #f0fdf4; stroke: #15803d; stroke-width: 1.4; }
+  .x { fill: #eff6ff; stroke: #1d4ed8; stroke-width: 1.4; }
+  .p { fill: #f8fafc; stroke: #475569; stroke-width: 1.4; }
+  .d { fill: #fff; stroke: #64748b; stroke-width: 1.2; }
+  .w { fill: #ffffff; stroke: #94a3b8; stroke-width: 1; stroke-dasharray: 4 3; }
+  .band { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1; }
+  .t { font-size: 11px; fill: #0f172a; }
+  .tb { font-size: 11.5px; font-weight: 700; fill: #0f172a; }
+  .ts { font-size: 9.5px; fill: #334155; }
+  .tc { font-size: 9px; font-family: Consolas, "Courier New", monospace; fill: #334155; }
+  .tl { font-size: 9.5px; fill: #1e3a8a; }
+  .th { font-size: 10px; font-weight: 700; fill: #166534; letter-spacing: .4px; }
+  .a { stroke: #334155; stroke-width: 1.3; fill: none; marker-end: url(#ah); }
+  .ad { stroke: #334155; stroke-width: 1.2; fill: none; stroke-dasharray: 5 3; marker-end: url(#ah); }
+  .ab { stroke: #1d4ed8; stroke-width: 1.3; fill: none; marker-end: url(#ahb); }
+  .ll { stroke: #94a3b8; stroke-width: 1; stroke-dasharray: 3 3; }
+  .rel { stroke: #475569; stroke-width: 1.2; fill: none; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <span class="badge">System Design and Architecture</span>
+  <h1>Huru SMS</h1>
+  <div class="sub">Multichannel SMS and Web Citizen Information and Guidance System for Tanzania</div>
+  <p style="font-size:11.5pt;max-width:150mm">This document describes how Huru SMS is designed and built: the parts of the system, how they work together, how a question travels from a citizen's phone to an answer, how data is stored, how the system is deployed and secured, and what the citizen and the operator see on screen.</p>
+  <div class="meta">
+    <div><strong>Owner and developer:</strong> Huru Digital Co. Ltd., Tanzania</div>
+    <div><strong>Work:</strong> Computer software (web application and SMS service)</div>
+    <div><strong>Version described:</strong> 1.0</div>
+    <div><strong>Date:</strong> 9 October 2026</div>
+    <div><strong>Prepared for:</strong> Copyright Society of Tanzania (COSOTA)</div>
+    <div><strong>Companion documents:</strong> <em>Huru SMS – Innovation Documentation</em> and <em>Huru SMS – Source Code Listing</em></div>
+  </div>
+</div>
+
+<h2>1. Purpose of this document</h2>
+<p>The <em>Innovation Documentation</em> explains what Huru SMS is and why it was created. This document explains <strong>how it is built</strong>. It is written for a reader who wants to verify that the submitted source code is a complete, working, original system. It contains:</p>
+<ul>
+  <li>a system overview showing the people and outside services the system talks to (Section 2);</li>
+  <li>the functional design: what each part of the system does (Section 3);</li>
+  <li>the software architecture: layers, components and the source files that implement them (Section 4);</li>
+  <li>the processing flows for an SMS question, a web question and the answer pipeline (Section 5);</li>
+  <li>the data design: database tables and their relationships (Section 6);</li>
+  <li>the deployment and integration design (Section 7) and the security design (Section 8);</li>
+  <li>the technology stack (Section 9) and screenshots of the SMS interface, the web interface and the administration panel (Section 10).</li>
+</ul>
+<p class="muted">File names in this document (for example <code>app/Services/ConversationService.php</code>) refer to the files reproduced in the <em>Source Code Listing</em>.</p>
+
+<h2>2. System overview</h2>
+<p>Huru SMS is a server application. Citizens reach it in two ways: by sending an SMS starting with the keyword <strong>HURU</strong> to the shortcode <strong>15054</strong>, or by opening the web chat in a browser. Staff of Huru Digital manage the content and settings through a protected administration panel. The application uses three outside services: the SMS gateway that carries messages to and from the mobile networks, a language model service that words the final reply, and a public directory of legal aid providers that is imported periodically.</p>
+
+<div class="fig">
+<svg viewBox="0 0 800 440" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker>
+    <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1d4ed8"/></marker>
+  </defs>
+  <!-- people -->
+  <rect class="p" x="30" y="40" width="170" height="70" rx="8"/>
+  <text class="tb" x="115" y="64" text-anchor="middle">Citizen with a basic phone</text>
+  <text class="ts" x="115" y="80" text-anchor="middle">No internet. Sends SMS</text>
+  <text class="ts" x="115" y="94" text-anchor="middle">"HURU + question" to 15054</text>
+
+  <rect class="p" x="30" y="190" width="170" height="70" rx="8"/>
+  <text class="tb" x="115" y="214" text-anchor="middle">Citizen with a smartphone</text>
+  <text class="ts" x="115" y="230" text-anchor="middle">or computer. Uses the web chat,</text>
+  <text class="ts" x="115" y="244" text-anchor="middle">installable as a phone app (PWA)</text>
+
+  <rect class="p" x="30" y="340" width="170" height="70" rx="8"/>
+  <text class="tb" x="115" y="364" text-anchor="middle">Operator (Huru Digital staff)</text>
+  <text class="ts" x="115" y="380" text-anchor="middle">Maintains knowledge, directories,</text>
+  <text class="ts" x="115" y="394" text-anchor="middle">personas, settings; reviews use</text>
+
+  <!-- external SMS gateway -->
+  <rect class="x" x="300" y="30" width="200" height="70" rx="8"/>
+  <text class="tb" x="400" y="54" text-anchor="middle">SMS gateway</text>
+  <text class="ts" x="400" y="70" text-anchor="middle">Africa's Talking, shortcode 15054</text>
+  <text class="ts" x="400" y="84" text-anchor="middle">Connected to Tanzanian mobile networks</text>
+
+  <!-- the system -->
+  <rect class="n" x="300" y="150" width="200" height="200" rx="10"/>
+  <text class="tb" x="400" y="178" text-anchor="middle" style="font-size:14px">Huru SMS</text>
+  <text class="ts" x="400" y="196" text-anchor="middle">Server application (PHP / Laravel)</text>
+  <line x1="320" y1="206" x2="480" y2="206" stroke="#15803d" stroke-width="1"/>
+  <text class="ts" x="400" y="224" text-anchor="middle">SMS receiver and sender</text>
+  <text class="ts" x="400" y="240" text-anchor="middle">Web chat, public site, community</text>
+  <text class="ts" x="400" y="256" text-anchor="middle">Conversation engine with</text>
+  <text class="ts" x="400" y="270" text-anchor="middle">Tanzanian context and knowledge</text>
+  <text class="ts" x="400" y="286" text-anchor="middle">Administration panel</text>
+  <text class="ts" x="400" y="302" text-anchor="middle">Queue, scheduler, logging</text>
+  <text class="ts" x="400" y="330" text-anchor="middle" style="font-style:italic">The work being registered</text>
+
+  <!-- external right -->
+  <rect class="x" x="600" y="150" width="170" height="60" rx="8"/>
+  <text class="tb" x="685" y="173" text-anchor="middle">Language model service</text>
+  <text class="ts" x="685" y="189" text-anchor="middle">Google Gemini API</text>
+  <text class="ts" x="685" y="201" text-anchor="middle">words the reply from our instructions</text>
+
+  <rect class="x" x="600" y="240" width="170" height="60" rx="8"/>
+  <text class="tb" x="685" y="263" text-anchor="middle">Database</text>
+  <text class="ts" x="685" y="279" text-anchor="middle">MySQL 8 (SQLite for testing)</text>
+  <text class="ts" x="685" y="291" text-anchor="middle">citizens, messages, knowledge, settings</text>
+
+  <rect class="x" x="600" y="330" width="170" height="60" rx="8"/>
+  <text class="tb" x="685" y="353" text-anchor="middle">Legal aid directory</text>
+  <text class="ts" x="685" y="369" text-anchor="middle">Public register (mslac.or.tz)</text>
+  <text class="ts" x="685" y="381" text-anchor="middle">imported weekly into local services</text>
+
+  <!-- arrows -->
+  <path class="a" d="M200,75 L300,70"/>
+  <text class="tl" x="250" y="60" text-anchor="middle">SMS</text>
+  <path class="a" d="M380,100 L380,150"/>
+  <text class="tl" x="376" y="128" text-anchor="end">inbound webhook (HTTPS, secret token)</text>
+  <path class="a" d="M420,150 L420,100"/>
+  <text class="tl" x="426" y="128">reply (REST API)</text>
+  <path class="a" d="M200,225 L300,235"/>
+  <text class="tl" x="250" y="218" text-anchor="middle">HTTPS web chat</text>
+  <path class="a" d="M200,375 L300,330"/>
+  <text class="tl" x="236" y="338" text-anchor="middle">HTTPS /admin</text>
+  <path class="a" d="M500,185 L600,182"/>
+  <text class="tl" x="550" y="172" text-anchor="middle">HTTPS (TLS verified)</text>
+  <path class="a" d="M500,270 L600,270"/>
+  <path class="a" d="M600,262 L500,262" style="marker-end:url(#ah)"/>
+  <text class="tl" x="550" y="252" text-anchor="middle">read / write</text>
+  <path class="a" d="M600,355 L500,330"/>
+  <text class="tl" x="556" y="322" text-anchor="middle">scheduled import</text>
+</svg>
+<div class="cap">Figure 1. System context: the people and outside services connected to Huru SMS.</div>
+</div>
+
+<table>
+  <tr><th style="width:26%">Actor or service</th><th>Role in the system</th></tr>
+  <tr><td>Citizen (SMS)</td><td>Sends questions and service commands by SMS from any phone. Identified only by phone number.</td></tr>
+  <tr><td>Citizen (web)</td><td>Logs into the web chat with a phone number confirmed by a one-time SMS code. Can search history, rate answers, set name, language and region, and take part in the community board.</td></tr>
+  <tr><td>Operator</td><td>Signs in to the administration panel with e-mail and password. Maintains knowledge entries, the national directory, local services, personas (prompt templates) and system settings; reviews conversations and engine logs; blocks abusive users.</td></tr>
+  <tr><td>SMS gateway</td><td>Africa's Talking delivers inbound SMS to the webhook and sends outbound replies. Any gateway with a similar HTTP interface can replace it; the integration is isolated in one class.</td></tr>
+  <tr><td>Language model service</td><td>Receives the system instructions and conversation turns assembled by Huru SMS and returns the worded reply. It never receives the citizen's name or number. The provider is behind an interface and can be swapped.</td></tr>
+  <tr><td>Database</td><td>Stores citizens, messages, engine logs, feedback, knowledge, directories, templates, settings, community content, sessions, cache and the job queue.</td></tr>
+</table>
+
+<h2>3. Functional design</h2>
+<h3>3.1 Modules</h3>
+<table>
+  <tr><th style="width:22%">Module</th><th>Functions</th><th style="width:30%">Main source files</th></tr>
+  <tr><td>SMS channel</td><td>Receives inbound SMS from the gateway, verifies the secret token, removes the keyword, queues the message, processes it and sends the reply. Handles delivery reports.</td><td><code>routes/api.php</code>, <code>Http/Controllers/SmsController.php</code>, <code>Http/Middleware/VerifySmsWebhook.php</code>, <code>Jobs/ProcessIncomingSms.php</code>, <code>Services/SmsService.php</code></td></tr>
+  <tr><td>Web chat</td><td>Phone-number login with one-time code, conversation screen, history search by keyword, date and topic, helpful / not helpful rating, preferences (name, language, region), offline notice, installable app.</td><td><code>Http/Controllers/WebChatController.php</code>, <code>resources/views/chat.blade.php</code>, <code>public/sw.js</code>, <code>public/manifest.json</code></td></tr>
+  <tr><td>Conversation engine</td><td>One pipeline for both channels: service commands, opt-out, bans, rate limit, topic classification, emergency detection, abuse moderation with strikes, Tanzanian context, knowledge retrieval, local resources, national contacts, history, reply generation, cleaning, storing and logging.</td><td><code>Services/ConversationService.php</code>, <code>TopicClassifier.php</code>, <code>LanguageDetector.php</code>, <code>TanzaniaContext.php</code>, <code>KnowledgeRetriever.php</code>, <code>PromptEngine.php</code>, <code>AiService.php</code>, <code>ModerationService.php</code>, <code>Ai/GeminiClient.php</code></td></tr>
+  <tr><td>Public site and community</td><td>Landing page with the SMS instructions, topics and contact form; terms and privacy pages; community threads where logged-in citizens post, reply, react and join or create groups.</td><td><code>routes/web.php</code>, <code>views/welcome.blade.php</code>, <code>Http/Controllers/CommunityController.php</code>, <code>views/community/*</code>, <code>views/legal/*</code></td></tr>
+  <tr><td>Administration panel</td><td>Dashboard (questions per day, topics, channels, tokens, errors), conversations and engine logs, knowledge base with file import, personas, national directory with verification, local services, citizens (ban, reset strikes), settings grouped by Branding, Engine, Channels and Safety.</td><td><code>Http/Controllers/Admin/*</code>, <code>Http/Middleware/EnsureAdmin.php</code>, <code>views/admin/*</code>, <code>Support/Settings.php</code></td></tr>
+  <tr><td>Background tasks</td><td>Database queue for SMS processing, a scheduler that drains the queue every minute and imports the legal aid directory weekly.</td><td><code>routes/console.php</code>, <code>Console/Commands/FetchLegalAidProviders.php</code></td></tr>
+  <tr><td>Starter data and tests</td><td>Seeders for settings, the administrator, personas, 42 knowledge entries, 33 national contacts and local services; 28 automated tests of the SMS flow, web chat, community, classifier, language and location detection and prompt assembly.</td><td><code>database/seeders/*</code>, <code>tests/*</code></td></tr>
+</table>
+
+<h3>3.2 Service commands (both channels)</h3>
+<table>
+  <tr><th style="width:30%">Command</th><th>Effect</th></tr>
+  <tr><td><code>MSAADA</code>, <code>HELP</code>, <code>MENU</code>, <code>?</code></td><td>Short guide to the service in the citizen's language</td></tr>
+  <tr><td><code>ACHA</code>, <code>STOP</code>, <code>SITAKI</code>, <code>ONDOA</code></td><td>Opt out: no further replies by SMS until the citizen sends a start command</td></tr>
+  <tr><td><code>ANZA</code>, <code>START</code>, <code>RUDI</code></td><td>Resume the service</td></tr>
+  <tr><td><code>LUGHA SW</code> / <code>LUGHA EN</code> / <code>LUGHA AUTO</code></td><td>Fix the reply language to Kiswahili or English, or follow the language written</td></tr>
+  <tr><td><code>JINA &lt;name&gt;</code></td><td>Save the citizen's name for a personal reply</td></tr>
+  <tr><td><code>MKOA &lt;region or district&gt;</code></td><td>Save the citizen's region (recognises all 31 regions and common districts) so nearby services are prioritised</td></tr>
+</table>
+<p>Commands are answered directly by the application and never reach the language model.</p>
+
+<h2>4. Software architecture</h2>
+<p>The application follows a layered architecture on the Laravel framework. Each layer only calls the layer below it. Both channels enter the same conversation engine, so the behaviour never differs between SMS and web.</p>
+
+<div class="fig">
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Band 1 -->
+  <rect class="band" x="10" y="10" width="780" height="100" rx="8"/>
+  <text class="th" x="22" y="28">1. CHANNELS (PRESENTATION)</text>
+  <rect class="n" x="22" y="40" width="180" height="58" rx="6"/>
+  <text class="tb" x="112" y="60" text-anchor="middle">SMS webhook API</text>
+  <text class="tc" x="112" y="75" text-anchor="middle">routes/api.php</text>
+  <text class="tc" x="112" y="88" text-anchor="middle">SmsController</text>
+  <rect class="n" x="214" y="40" width="180" height="58" rx="6"/>
+  <text class="tb" x="304" y="60" text-anchor="middle">Web chat (PWA)</text>
+  <text class="tc" x="304" y="75" text-anchor="middle">views/chat.blade.php</text>
+  <text class="tc" x="304" y="88" text-anchor="middle">public/sw.js, manifest.json</text>
+  <rect class="n" x="406" y="40" width="180" height="58" rx="6"/>
+  <text class="tb" x="496" y="60" text-anchor="middle">Public site and community</text>
+  <text class="tc" x="496" y="75" text-anchor="middle">views/welcome, legal/*,</text>
+  <text class="tc" x="496" y="88" text-anchor="middle">community/*</text>
+  <rect class="n" x="598" y="40" width="180" height="58" rx="6"/>
+  <text class="tb" x="688" y="60" text-anchor="middle">Administration panel</text>
+  <text class="tc" x="688" y="75" text-anchor="middle">views/admin/*</text>
+  <text class="tc" x="688" y="88" text-anchor="middle">layouts/admin.blade.php</text>
+
+  <!-- Band 2 -->
+  <rect class="band" x="10" y="122" width="780" height="100" rx="8"/>
+  <text class="th" x="22" y="140">2. APPLICATION (HTTP, JOBS, CONSOLE)</text>
+  <rect class="n" x="22" y="152" width="180" height="58" rx="6"/>
+  <text class="tb" x="112" y="172" text-anchor="middle">Middleware</text>
+  <text class="tc" x="112" y="187" text-anchor="middle">VerifySmsWebhook, EnsureAdmin</text>
+  <text class="tc" x="112" y="200" text-anchor="middle">throttle, CSRF, sessions</text>
+  <rect class="n" x="214" y="152" width="180" height="58" rx="6"/>
+  <text class="tb" x="304" y="172" text-anchor="middle">Controllers</text>
+  <text class="tc" x="304" y="187" text-anchor="middle">WebChat, Sms, Community,</text>
+  <text class="tc" x="304" y="200" text-anchor="middle">Contact, Admin/* (9 classes)</text>
+  <rect class="n" x="406" y="152" width="180" height="58" rx="6"/>
+  <text class="tb" x="496" y="172" text-anchor="middle">Queued job</text>
+  <text class="tc" x="496" y="187" text-anchor="middle">Jobs/ProcessIncomingSms</text>
+  <text class="tc" x="496" y="200" text-anchor="middle">(unique per message, 2 tries)</text>
+  <rect class="n" x="598" y="152" width="180" height="58" rx="6"/>
+  <text class="tb" x="688" y="172" text-anchor="middle">Console and scheduler</text>
+  <text class="tc" x="688" y="187" text-anchor="middle">routes/console.php</text>
+  <text class="tc" x="688" y="200" text-anchor="middle">huru:import-legal-aid</text>
+
+  <!-- Band 3 -->
+  <rect class="band" x="10" y="234" width="780" height="170" rx="8"/>
+  <text class="th" x="22" y="252">3. DOMAIN SERVICES (THE CONVERSATION ENGINE)</text>
+  <rect class="n" x="22" y="262" width="756" height="44" rx="6"/>
+  <text class="tb" x="400" y="280" text-anchor="middle">ConversationService – single entry point for every channel: handle(citizen, text, channel) → reply</text>
+  <text class="tc" x="400" y="296" text-anchor="middle">commands · opt-out · bans · rate limit · classification · moderation · maintenance switch · context · generation · storage · logging</text>
+  <rect class="n" x="22" y="318" width="146" height="76" rx="6"/>
+  <text class="tb" x="95" y="338" text-anchor="middle">TopicClassifier</text>
+  <text class="ts" x="95" y="354" text-anchor="middle">12 topics, bilingual</text>
+  <text class="ts" x="95" y="367" text-anchor="middle">keyword scoring,</text>
+  <text class="ts" x="95" y="380" text-anchor="middle">emergency flag</text>
+  <rect class="n" x="176" y="318" width="146" height="76" rx="6"/>
+  <text class="tb" x="249" y="338" text-anchor="middle">LanguageDetector</text>
+  <text class="ts" x="249" y="354" text-anchor="middle">Kiswahili / English</text>
+  <text class="ts" x="249" y="367" text-anchor="middle">from the text, with</text>
+  <text class="ts" x="249" y="380" text-anchor="middle">stored preference</text>
+  <rect class="n" x="330" y="318" width="146" height="76" rx="6"/>
+  <text class="tb" x="403" y="338" text-anchor="middle">TanzaniaContext</text>
+  <text class="ts" x="403" y="354" text-anchor="middle">31 regions, districts,</text>
+  <text class="ts" x="403" y="367" text-anchor="middle">areas; locale facts;</text>
+  <text class="ts" x="403" y="380" text-anchor="middle">per-topic guidance</text>
+  <rect class="n" x="484" y="318" width="146" height="76" rx="6"/>
+  <text class="tb" x="557" y="338" text-anchor="middle">KnowledgeRetriever</text>
+  <text class="ts" x="557" y="354" text-anchor="middle">stemmed bilingual</text>
+  <text class="ts" x="557" y="367" text-anchor="middle">keyword search over</text>
+  <text class="ts" x="557" y="380" text-anchor="middle">knowledge entries</text>
+  <rect class="n" x="638" y="318" width="140" height="76" rx="6"/>
+  <text class="tb" x="708" y="338" text-anchor="middle">PromptEngine</text>
+  <text class="ts" x="708" y="354" text-anchor="middle">assembles persona,</text>
+  <text class="ts" x="708" y="367" text-anchor="middle">context, knowledge,</text>
+  <text class="ts" x="708" y="380" text-anchor="middle">contacts, channel rules</text>
+
+  <!-- Band 4 -->
+  <rect class="band" x="10" y="416" width="780" height="86" rx="8"/>
+  <text class="th" x="22" y="434">4. INTEGRATION AND SUPPORT</text>
+  <rect class="n" x="22" y="444" width="146" height="50" rx="6"/>
+  <text class="tb" x="95" y="464" text-anchor="middle">AiService</text>
+  <text class="ts" x="95" y="479" text-anchor="middle">calls the model, cleans text</text>
+  <rect class="n" x="176" y="444" width="146" height="50" rx="6"/>
+  <text class="tb" x="249" y="464" text-anchor="middle">GeminiClient</text>
+  <text class="ts" x="249" y="479" text-anchor="middle">implements LlmClient</text>
+  <rect class="n" x="330" y="444" width="146" height="50" rx="6"/>
+  <text class="tb" x="403" y="464" text-anchor="middle">SmsService</text>
+  <text class="ts" x="403" y="479" text-anchor="middle">gateway REST, OTP sending</text>
+  <rect class="n" x="484" y="444" width="146" height="50" rx="6"/>
+  <text class="tb" x="557" y="464" text-anchor="middle">ModerationService</text>
+  <text class="ts" x="557" y="479" text-anchor="middle">word lists, strikes, bans</text>
+  <rect class="n" x="638" y="444" width="140" height="50" rx="6"/>
+  <text class="tb" x="708" y="464" text-anchor="middle">Settings, Phone</text>
+  <text class="ts" x="708" y="479" text-anchor="middle">schema, cache, +255 format</text>
+
+  <!-- Band 5 -->
+  <rect class="band" x="10" y="514" width="780" height="86" rx="8"/>
+  <text class="th" x="22" y="532">5. DATA</text>
+  <rect class="x" x="22" y="542" width="210" height="50" rx="6"/>
+  <text class="tb" x="127" y="560" text-anchor="middle">Citizens and conversations</text>
+  <text class="tc" x="127" y="576" text-anchor="middle">users, messages, ai_logs, feedback</text>
+  <rect class="x" x="242" y="542" width="320" height="50" rx="6"/>
+  <text class="tb" x="402" y="560" text-anchor="middle">Operator-maintained content</text>
+  <text class="tc" x="402" y="574" text-anchor="middle">knowledge_entries, prompt_templates, reference_contacts,</text>
+  <text class="tc" x="402" y="586" text-anchor="middle">local_resources, system_settings</text>
+  <rect class="x" x="572" y="542" width="206" height="50" rx="6"/>
+  <text class="tb" x="675" y="560" text-anchor="middle">Community and framework</text>
+  <text class="tc" x="675" y="576" text-anchor="middle">community_*, sessions, cache, jobs</text>
+</svg>
+<div class="cap">Figure 2. Layered architecture. Every box is an original class or view in the source code listing.</div>
+</div>
+
+<h3>4.1 Design principles</h3>
+<ul>
+  <li><strong>One engine, many channels.</strong> SMS and web both call <code>ConversationService::handle()</code>. Channel-specific limits (for example the 120-word SMS budget) are passed as context, not duplicated.</li>
+  <li><strong>Context before generation.</strong> The application decides the topic, language, location, knowledge, nearby services and official contacts <em>before</em> the language model is called. The model only words a reply inside those instructions, which keeps answers Tanzanian and prevents invented numbers or offices.</li>
+  <li><strong>Replaceable providers.</strong> The model is used through the <code>LlmClient</code> interface and the gateway through <code>SmsService</code>; either can be swapped without touching the engine.</li>
+  <li><strong>Operator control without code changes.</strong> Knowledge, directories, personas and settings live in the database and are edited in the admin panel. Settings are whitelisted in <code>Support/Settings.php</code> so only known keys with validated types can be changed.</li>
+  <li><strong>Graceful degradation.</strong> If the model, the gateway or the key is unavailable the citizen gets a polite message, the failure is logged with its cause, and commands keep working.</li>
+</ul>
+
+<h3>4.2 Component responsibilities</h3>
+<table>
+  <tr><th style="width:27%">Component (file)</th><th>Responsibility</th></tr>
+  <tr><td><code>Services/ConversationService.php</code></td><td>Orders the pipeline in Figure 5; resolves language; applies commands, opt-out, bans, rate limit, strikes and the maintenance switch; stores messages; writes engine logs.</td></tr>
+  <tr><td><code>Services/TopicClassifier.php</code></td><td>Scores bilingual keyword lists for 12 topics (law, health, agriculture, education, government services, finance, employment, family, technology, transport, business, general) and flags emergencies such as "amezimia" or "not breathing".</td></tr>
+  <tr><td><code>Services/TanzaniaContext.php</code></td><td>Knows the 31 regions, districts and well-known areas; detects a location in free text; provides the locale block (currency, time zone, institutions, emergency numbers) and per-topic guidance in both languages.</td></tr>
+  <tr><td><code>Services/KnowledgeRetriever.php</code></td><td>Tokenises and stems Kiswahili and English, removes stop words, and ranks active knowledge entries by title, keyword and content matches for the detected topic and language.</td></tr>
+  <tr><td><code>Services/PromptEngine.php</code></td><td>Builds the system instruction from persona template, country context, topic rules, citizen profile, retrieved knowledge, nearby local resources, national contacts (emergency first) and channel constraints; builds the multi-turn history.</td></tr>
+  <tr><td><code>Services/AiService.php</code>, <code>Services/Ai/GeminiClient.php</code></td><td>Send the instruction and turns to the model with the configured model name, temperature and token limit; map safety blocks, errors and missing configuration to statuses; clean markdown and length.</td></tr>
+  <tr><td><code>Services/SmsService.php</code></td><td>Sends SMS and one-time codes through the gateway REST API (sandbox or live endpoint); reports when not configured instead of failing.</td></tr>
+  <tr><td><code>Services/ModerationService.php</code></td><td>Detects abusive wording, counts strikes per citizen, issues warnings and bans at the configured threshold.</td></tr>
+  <tr><td><code>Http/Controllers/WebChatController.php</code></td><td>Session, one-time code request and verification, message listing with filters, sending, feedback, preferences and logout; returns a fresh CSRF token after login.</td></tr>
+  <tr><td><code>Http/Controllers/SmsController.php</code>, <code>Jobs/ProcessIncomingSms.php</code></td><td>Accept the gateway callback quickly, enforce the keyword, queue the processing, then run the engine and send the reply in the background.</td></tr>
+  <tr><td><code>Http/Controllers/Admin/*</code></td><td>Dashboard statistics, conversation review, CRUD screens for knowledge (with CSV/JSON import), personas, contacts (with verification), local resources, citizens and settings.</td></tr>
+  <tr><td><code>Support/Settings.php</code>, <code>Support/Phone.php</code></td><td>Typed, validated, cached settings schema in four groups; phone normalisation to +255 format and masking for display.</td></tr>
+</table>
+
+<h2 class="pb">5. Processing flows</h2>
+<h3>5.1 An SMS question</h3>
+<div class="fig">
+<svg viewBox="0 0 800 430" xmlns="http://www.w3.org/2000/svg">
+  <!-- lifeline heads -->
+  <g>
+    <rect class="p" x="20" y="10" width="90" height="36" rx="6"/><text class="tb" x="65" y="32" text-anchor="middle">Citizen</text>
+    <rect class="x" x="130" y="10" width="100" height="36" rx="6"/><text class="tb" x="180" y="32" text-anchor="middle">SMS gateway</text>
+    <rect class="n" x="250" y="10" width="110" height="36" rx="6"/><text class="tb" x="305" y="26" text-anchor="middle">Webhook</text><text class="tc" x="305" y="40" text-anchor="middle">SmsController</text>
+    <rect class="n" x="380" y="10" width="110" height="36" rx="6"/><text class="tb" x="435" y="26" text-anchor="middle">Queue job</text><text class="tc" x="435" y="40" text-anchor="middle">ProcessIncomingSms</text>
+    <rect class="n" x="510" y="10" width="120" height="36" rx="6"/><text class="tb" x="570" y="26" text-anchor="middle">Engine</text><text class="tc" x="570" y="40" text-anchor="middle">ConversationService</text>
+    <rect class="x" x="650" y="10" width="60" height="36" rx="6"/><text class="tb" x="680" y="32" text-anchor="middle">Model</text>
+    <rect class="n" x="725" y="10" width="65" height="36" rx="6"/><text class="tb" x="757" y="26" text-anchor="middle">Sender</text><text class="tc" x="757" y="40" text-anchor="middle">SmsService</text>
+  </g>
+  <g>
+    <line class="ll" x1="65" y1="46" x2="65" y2="420"/>
+    <line class="ll" x1="180" y1="46" x2="180" y2="420"/>
+    <line class="ll" x1="305" y1="46" x2="305" y2="420"/>
+    <line class="ll" x1="435" y1="46" x2="435" y2="420"/>
+    <line class="ll" x1="570" y1="46" x2="570" y2="420"/>
+    <line class="ll" x1="680" y1="46" x2="680" y2="420"/>
+    <line class="ll" x1="757" y1="46" x2="757" y2="420"/>
+  </g>
+  <!-- messages -->
+  <path class="a" d="M65,75 L180,75"/><text class="ts" x="122" y="69" text-anchor="middle">1. SMS "HURU swali…" to 15054</text>
+  <path class="a" d="M180,105 L305,105"/><text class="ts" x="242" y="99" text-anchor="middle">2. POST /api/sms/inbound?token=…</text>
+  <rect class="d" x="275" y="118" width="60" height="30" rx="4"/><text class="ts" x="305" y="130" text-anchor="middle">verify token,</text><text class="ts" x="305" y="142" text-anchor="middle">strip keyword</text>
+  <path class="a" d="M305,165 L435,165"/><text class="ts" x="370" y="159" text-anchor="middle">3. dispatch (queued)</text>
+  <path class="ad" d="M305,185 L180,185"/><text class="ts" x="242" y="198" text-anchor="middle">4. HTTP 200 (within seconds)</text>
+  <path class="a" d="M435,215 L570,215"/><text class="ts" x="502" y="209" text-anchor="middle">5. handle(citizen, text, "sms")</text>
+  <rect class="d" x="500" y="228" width="140" height="56" rx="4"/>
+  <text class="ts" x="570" y="241" text-anchor="middle">command? moderation?</text>
+  <text class="ts" x="570" y="253" text-anchor="middle">classify topic, detect</text>
+  <text class="ts" x="570" y="265" text-anchor="middle">location, retrieve knowledge,</text>
+  <text class="ts" x="570" y="277" text-anchor="middle">build instructions (Fig. 5)</text>
+  <path class="a" d="M570,300 L680,300"/><text class="ts" x="625" y="294" text-anchor="middle">6. generate</text>
+  <path class="ad" d="M680,320 L570,320"/><text class="ts" x="625" y="333" text-anchor="middle">7. worded reply</text>
+  <rect class="d" x="525" y="340" width="90" height="26" rx="4"/><text class="ts" x="570" y="351" text-anchor="middle">clean, store,</text><text class="ts" x="570" y="362" text-anchor="middle">log tokens/latency</text>
+  <path class="ad" d="M570,380 L435,380"/><text class="ts" x="502" y="374" text-anchor="middle">8. reply text</text>
+  <path class="a" d="M435,398 L757,398"/><text class="ts" x="600" y="392" text-anchor="middle">9. send(to, text)</text>
+  <path class="a" d="M757,412 L180,412"/><text class="ts" x="470" y="424" text-anchor="middle">10. POST messaging API (reply SMS delivered to the citizen)</text>
+</svg>
+<div class="cap">Figure 3. Sequence of an SMS question. The webhook answers the gateway immediately; the slow work happens in the queue.</div>
+</div>
+
+<h3>5.2 A web chat question</h3>
+<div class="fig">
+<svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg">
+  <g>
+    <rect class="p" x="40" y="10" width="110" height="36" rx="6"/><text class="tb" x="95" y="32" text-anchor="middle">Browser / PWA</text>
+    <rect class="n" x="230" y="10" width="130" height="36" rx="6"/><text class="tb" x="295" y="26" text-anchor="middle">Web chat API</text><text class="tc" x="295" y="40" text-anchor="middle">WebChatController</text>
+    <rect class="n" x="440" y="10" width="130" height="36" rx="6"/><text class="tb" x="505" y="26" text-anchor="middle">Engine</text><text class="tc" x="505" y="40" text-anchor="middle">ConversationService</text>
+    <rect class="n" x="650" y="10" width="110" height="36" rx="6"/><text class="tb" x="705" y="26" text-anchor="middle">OTP sender</text><text class="tc" x="705" y="40" text-anchor="middle">SmsService</text>
+  </g>
+  <line class="ll" x1="95" y1="46" x2="95" y2="290"/><line class="ll" x1="295" y1="46" x2="295" y2="290"/><line class="ll" x1="505" y1="46" x2="505" y2="290"/><line class="ll" x1="705" y1="46" x2="705" y2="290"/>
+  <path class="a" d="M95,70 L295,70"/><text class="ts" x="195" y="64" text-anchor="middle">1. POST /chat/request-otp (phone)</text>
+  <path class="a" d="M295,90 L705,90"/><text class="ts" x="500" y="84" text-anchor="middle">2. send 6-digit code by SMS (stored hashed, 5 min by default, 5 attempts)</text>
+  <path class="a" d="M95,120 L295,120"/><text class="ts" x="195" y="114" text-anchor="middle">3. POST /chat/verify-otp (phone, code)</text>
+  <path class="ad" d="M295,140 L95,140"/><text class="ts" x="195" y="153" text-anchor="middle">4. session opened, new CSRF token</text>
+  <path class="a" d="M95,180 L295,180"/><text class="ts" x="195" y="174" text-anchor="middle">5. POST /chat/send (text)</text>
+  <path class="a" d="M295,200 L505,200"/><text class="ts" x="400" y="194" text-anchor="middle">6. handle(citizen, text, "web")</text>
+  <rect class="d" x="460" y="212" width="90" height="26" rx="4"/><text class="ts" x="505" y="223" text-anchor="middle">same pipeline</text><text class="ts" x="505" y="234" text-anchor="middle">as SMS (Fig. 5)</text>
+  <path class="ad" d="M505,252 L295,252"/><text class="ts" x="400" y="265" text-anchor="middle">7. reply, topic, language</text>
+  <path class="ad" d="M295,275 L95,275"/><text class="ts" x="195" y="288" text-anchor="middle">8. JSON → shown in the chat; GET /chat/messages for history and filters</text>
+</svg>
+<div class="cap">Figure 4. Sequence of a web chat login and question. The web channel shares the engine with SMS.</div>
+</div>
+
+<h3 class="pb">5.3 The answer pipeline</h3>
+<div class="fig">
+<svg viewBox="0 0 800 700" xmlns="http://www.w3.org/2000/svg">
+  <!-- main column boxes: x=200 w=330 -->
+  <rect class="n" x="200" y="10" width="330" height="40" rx="7"/>
+  <text class="tb" x="365" y="27" text-anchor="middle">1. Incoming text</text>
+  <text class="ts" x="365" y="41" text-anchor="middle">SMS with keyword removed, or web message</text>
+
+  <rect class="n" x="200" y="70" width="330" height="40" rx="7"/>
+  <text class="tb" x="365" y="87" text-anchor="middle">2. Resolve language</text>
+  <text class="ts" x="365" y="101" text-anchor="middle">stored preference, language policy, or detection from the text</text>
+
+  <rect class="n" x="200" y="130" width="330" height="40" rx="7"/>
+  <text class="tb" x="365" y="147" text-anchor="middle">3. Service command?</text>
+  <text class="ts" x="365" y="161" text-anchor="middle">MSAADA, ACHA, ANZA, LUGHA, JINA, MKOA</text>
+  <rect class="d" x="580" y="130" width="200" height="40" rx="7"/>
+  <text class="ts" x="680" y="147" text-anchor="middle">yes → answered by the application,</text>
+  <text class="ts" x="680" y="161" text-anchor="middle">profile updated, no model call</text>
+  <path class="a" d="M530,150 L580,150"/>
+
+  <rect class="n" x="200" y="190" width="330" height="40" rx="7"/>
+  <text class="tb" x="365" y="207" text-anchor="middle">4. Opted out? Banned? Too many questions?</text>
+  <text class="ts" x="365" y="221" text-anchor="middle">per-citizen limit per minute from settings</text>
+  <rect class="d" x="580" y="190" width="200" height="40" rx="7"/>
+  <text class="ts" x="680" y="207" text-anchor="middle">yes → silence (opted out) or one</text>
+  <text class="ts" x="680" y="221" text-anchor="middle">short notice in the citizen's language</text>
+  <path class="a" d="M530,210 L580,210"/>
+
+  <rect class="n" x="200" y="250" width="330" height="40" rx="7"/>
+  <text class="tb" x="365" y="267" text-anchor="middle">5. Classify topic and detect emergency</text>
+  <text class="ts" x="365" y="281" text-anchor="middle">12 topics; emergency words put hotlines first</text>
+
+  <rect class="n" x="200" y="310" width="330" height="40" rx="7"/>
+  <text class="tb" x="365" y="327" text-anchor="middle">6. Abusive wording?</text>
+  <text class="ts" x="365" y="341" text-anchor="middle">word lists in both languages</text>
+  <rect class="d" x="580" y="310" width="200" height="40" rx="7"/>
+  <text class="ts" x="680" y="327" text-anchor="middle">yes → warning and strike;</text>
+  <text class="ts" x="680" y="341" text-anchor="middle">ban at the configured threshold</text>
+  <path class="a" d="M530,330 L580,330"/>
+
+  <rect class="n" x="200" y="370" width="330" height="40" rx="7"/>
+  <text class="tb" x="365" y="387" text-anchor="middle">7. Engine switched off by the operator?</text>
+  <text class="ts" x="365" y="401" text-anchor="middle">maintenance switch in settings</text>
+  <rect class="d" x="580" y="370" width="200" height="40" rx="7"/>
+  <text class="ts" x="680" y="387" text-anchor="middle">yes → maintenance message</text>
+  <text class="ts" x="680" y="401" text-anchor="middle">(Kiswahili or English)</text>
+  <path class="a" d="M530,390 L580,390"/>
+
+  <rect class="n" x="200" y="430" width="330" height="40" rx="7"/>
+  <text class="tb" x="365" y="447" text-anchor="middle">8. Detect location in the text</text>
+  <text class="ts" x="365" y="461" text-anchor="middle">region, district or area; saved to the profile if new</text>
+
+  <rect class="n" x="200" y="490" width="330" height="76" rx="7"/>
+  <text class="tb" x="365" y="507" text-anchor="middle">9. Build the instructions (PromptEngine)</text>
+  <text class="ts" x="365" y="521" text-anchor="middle">persona template · Tanzania locale block · topic guidance</text>
+  <text class="ts" x="365" y="534" text-anchor="middle">citizen profile (name, region) · top knowledge entries</text>
+  <text class="ts" x="365" y="547" text-anchor="middle">local services near the citizen · national contacts (emergency first)</text>
+  <text class="ts" x="365" y="560" text-anchor="middle">recent conversation turns · channel rules (SMS ≤ 120 words, plain text)</text>
+  <rect class="x" x="20" y="490" width="150" height="76" rx="7"/>
+  <text class="tb" x="95" y="508" text-anchor="middle">Operator content</text>
+  <text class="ts" x="95" y="523" text-anchor="middle">knowledge_entries</text>
+  <text class="ts" x="95" y="536" text-anchor="middle">prompt_templates</text>
+  <text class="ts" x="95" y="549" text-anchor="middle">reference_contacts</text>
+  <text class="ts" x="95" y="562" text-anchor="middle">local_resources</text>
+  <path class="ab" d="M170,528 L200,528"/>
+
+  <rect class="n" x="200" y="586" width="330" height="40" rx="7"/>
+  <text class="tb" x="365" y="603" text-anchor="middle">10. Language model words the reply</text>
+  <text class="ts" x="365" y="617" text-anchor="middle">model, temperature and token limit from settings</text>
+  <rect class="d" x="580" y="586" width="200" height="40" rx="7"/>
+  <text class="ts" x="680" y="603" text-anchor="middle">safety block → strike; error or</text>
+  <text class="ts" x="680" y="617" text-anchor="middle">no key → polite failure, logged</text>
+  <path class="a" d="M530,606 L580,606"/>
+
+  <rect class="n" x="200" y="646" width="330" height="44" rx="7"/>
+  <text class="tb" x="365" y="664" text-anchor="middle">11. Clean, store, log, reply</text>
+  <text class="ts" x="365" y="679" text-anchor="middle">messages + ai_logs (tokens, latency); SMS via gateway or JSON to web chat</text>
+
+  <!-- vertical arrows -->
+  <path class="a" d="M365,50 L365,70"/><path class="a" d="M365,110 L365,130"/><path class="a" d="M365,170 L365,190"/>
+  <path class="a" d="M365,230 L365,250"/><path class="a" d="M365,290 L365,310"/><path class="a" d="M365,350 L365,370"/>
+  <path class="a" d="M365,410 L365,430"/><path class="a" d="M365,470 L365,490"/><path class="a" d="M365,566 L365,586"/>
+  <path class="a" d="M365,626 L365,646"/>
+</svg>
+<div class="cap">Figure 5. The answer pipeline inside the conversation engine. Steps 1 to 9 and 11 are entirely original application logic; step 10 is the only call to an outside model.</div>
+</div>
+
+<h2 class="pb">6. Data design</h2>
+<p>The database has 14 application tables plus the framework tables for sessions, cache and the job queue. Figure 6 shows the application tables and their relationships; the tables that follow describe the important columns.</p>
+
+<div class="fig">
+<svg viewBox="0 0 800 700" xmlns="http://www.w3.org/2000/svg">
+  <!-- users -->
+  <rect class="n" x="300" y="10" width="200" height="118" rx="6"/>
+  <rect x="300" y="10" width="200" height="20" rx="6" fill="#15803d"/>
+  <text x="400" y="24" text-anchor="middle" style="font-size:11px;font-weight:700;fill:#fff">users</text>
+  <text class="tc" x="308" y="44">id, phone_number (unique), name</text>
+  <text class="tc" x="308" y="57">email, password, role</text>
+  <text class="tc" x="308" y="70">preferred_language, region</text>
+  <text class="tc" x="308" y="83">is_banned, abuse_count, opted_out</text>
+  <text class="tc" x="308" y="96">otp_hash, otp_expires_at, otp_attempts</text>
+  <text class="tc" x="308" y="109">last_seen_at, timestamps</text>
+
+  <!-- messages -->
+  <rect class="n" x="40" y="190" width="200" height="98" rx="6"/>
+  <rect x="40" y="190" width="200" height="20" rx="6" fill="#15803d"/>
+  <text x="140" y="204" text-anchor="middle" style="font-size:11px;font-weight:700;fill:#fff">messages</text>
+  <text class="tc" x="48" y="224">id, user_id → users</text>
+  <text class="tc" x="48" y="237">direction (inbound/outbound)</text>
+  <text class="tc" x="48" y="250">channel (sms/web), content</text>
+  <text class="tc" x="48" y="263">language, category</text>
+  <text class="tc" x="48" y="276">created_at (indexed)</text>
+
+  <!-- ai_logs -->
+  <rect class="n" x="40" y="340" width="200" height="98" rx="6"/>
+  <rect x="40" y="340" width="200" height="20" rx="6" fill="#15803d"/>
+  <text x="140" y="354" text-anchor="middle" style="font-size:11px;font-weight:700;fill:#fff">ai_logs</text>
+  <text class="tc" x="48" y="374">id, message_id → messages</text>
+  <text class="tc" x="48" y="387">model, category, status</text>
+  <text class="tc" x="48" y="400">prompt, response</text>
+  <text class="tc" x="48" y="413">prompt/completion/total_tokens</text>
+  <text class="tc" x="48" y="426">latency_ms</text>
+
+  <!-- feedback -->
+  <rect class="n" x="300" y="340" width="200" height="72" rx="6"/>
+  <rect x="300" y="340" width="200" height="20" rx="6" fill="#15803d"/>
+  <text x="400" y="354" text-anchor="middle" style="font-size:11px;font-weight:700;fill:#fff">feedback</text>
+  <text class="tc" x="308" y="374">id, message_id → messages</text>
+  <text class="tc" x="308" y="387">user_id → users</text>
+  <text class="tc" x="308" y="400">rating (+1 / -1), comment</text>
+
+  <!-- community_threads -->
+  <rect class="n" x="560" y="190" width="200" height="85" rx="6"/>
+  <rect x="560" y="190" width="200" height="20" rx="6" fill="#1d4ed8"/>
+  <text x="660" y="204" text-anchor="middle" style="font-size:11px;font-weight:700;fill:#fff">community_threads</text>
+  <text class="tc" x="568" y="224">id, title, slug (unique)</text>
+  <text class="tc" x="568" y="237">description, creator_id → users</text>
+  <text class="tc" x="568" y="250">is_private, is_system</text>
+
+  <!-- community_posts -->
+  <rect class="n" x="560" y="340" width="200" height="85" rx="6"/>
+  <rect x="560" y="340" width="200" height="20" rx="6" fill="#1d4ed8"/>
+  <text x="660" y="354" text-anchor="middle" style="font-size:11px;font-weight:700;fill:#fff">community_posts</text>
+  <text class="tc" x="568" y="374">id, community_thread_id → threads</text>
+  <text class="tc" x="568" y="387">parent_id → posts (replies)</text>
+  <text class="tc" x="568" y="400">user_id → users, content</text>
+  <text class="tc" x="568" y="413">is_approved, is_pinned</text>
+
+  <!-- members / reactions / invites -->
+  <rect class="n" x="540" y="470" width="250" height="60" rx="6"/>
+  <rect x="540" y="470" width="250" height="20" rx="6" fill="#1d4ed8"/>
+  <text x="665" y="484" text-anchor="middle" style="font-size:10.5px;font-weight:700;fill:#fff">community_members · _reactions · _invites</text>
+  <text class="tc" x="548" y="504">thread_id, user_id, role, last_read_at</text>
+  <text class="tc" x="548" y="517">post_id, user_id, type · invite token, status</text>
+
+  <!-- relationships -->
+  <path class="rel" d="M300,70 L140,70 L140,190"/><text class="ts" x="150" y="180">1 : many (messages)</text>
+  <path class="rel" d="M140,288 L140,340"/><text class="ts" x="150" y="318">1 : 0..1 (engine log)</text>
+  <path class="rel" d="M240,250 L400,250 L400,340"/><text class="ts" x="408" y="300">1 : many (ratings)</text>
+  <path class="rel" d="M500,70 L660,70 L660,190"/><text class="ts" x="668" y="130">1 : many (creator)</text>
+  <path class="rel" d="M660,275 L660,340"/><text class="ts" x="668" y="312">1 : many</text>
+  <path class="rel" d="M660,425 L660,470"/>
+  <path class="rel" d="M500,100 L540,100 L540,390 L560,390"/><text class="ts" x="508" y="130">author</text>
+
+  <!-- operator content group -->
+  <rect class="w" x="40" y="560" width="720" height="130" rx="8"/>
+  <text class="th" x="52" y="578">OPERATOR-MAINTAINED CONTENT (no foreign keys; edited in the admin panel; read by the engine)</text>
+  <rect class="x" x="52" y="590" width="136" height="90" rx="6"/>
+  <text class="tb" x="120" y="606" text-anchor="middle">knowledge_entries</text>
+  <text class="tc" x="58" y="622">title, content, summary</text>
+  <text class="tc" x="58" y="635">category, keywords (json)</text>
+  <text class="tc" x="58" y="648">language, source</text>
+  <text class="tc" x="58" y="661">is_active</text>
+  <rect class="x" x="196" y="590" width="136" height="90" rx="6"/>
+  <text class="tb" x="264" y="606" text-anchor="middle">prompt_templates</text>
+  <text class="tc" x="202" y="622">name (unique)</text>
+  <text class="tc" x="202" y="635">category, language</text>
+  <text class="tc" x="202" y="648">template (persona text)</text>
+  <text class="tc" x="202" y="661">is_active</text>
+  <rect class="x" x="340" y="590" width="136" height="90" rx="6"/>
+  <text class="tb" x="408" y="606" text-anchor="middle">reference_contacts</text>
+  <text class="tc" x="346" y="622">name, category, phone</text>
+  <text class="tc" x="346" y="635">alt_phone, email, website</text>
+  <text class="tc" x="346" y="648">description_sw / _en</text>
+  <text class="tc" x="346" y="661">is_emergency, verified_at</text>
+  <rect class="x" x="484" y="590" width="136" height="90" rx="6"/>
+  <text class="tb" x="552" y="606" text-anchor="middle">local_resources</text>
+  <text class="tc" x="490" y="622">name, category</text>
+  <text class="tc" x="490" y="635">region, district, ward</text>
+  <text class="tc" x="490" y="648">location, phone, email</text>
+  <text class="tc" x="490" y="661">source, is_active</text>
+  <rect class="x" x="628" y="590" width="122" height="90" rx="6"/>
+  <text class="tb" x="689" y="606" text-anchor="middle">system_settings</text>
+  <text class="tc" x="634" y="622">key (unique)</text>
+  <text class="tc" x="634" y="635">value</text>
+  <text class="tc" x="634" y="648">(whitelisted by</text>
+  <text class="tc" x="634" y="661">Settings schema)</text>
+</svg>
+<div class="cap">Figure 6. Entity-relationship diagram of the application tables (migrations in <code>database/migrations/</code>).</div>
+</div>
+
+<table>
+  <tr><th style="width:22%">Table</th><th>Purpose and notable design choices</th></tr>
+  <tr><td><code>users</code></td><td>One row per citizen or operator. Citizens are identified by phone number in +255 format; operators by e-mail and password with <code>role = admin</code>. Holds the hashed one-time code, strike count, ban and opt-out flags, and preferences.</td></tr>
+  <tr><td><code>messages</code></td><td>Every inbound and outbound text on both channels, with language and topic. Indexed by citizen and time, and by channel and time, for history search and dashboard statistics.</td></tr>
+  <tr><td><code>ai_logs</code></td><td>One row per engine call attached to the outbound message: the full instructions sent, the raw response, status, token counts and latency. Lets the operator audit why an answer was given.</td></tr>
+  <tr><td><code>feedback</code></td><td>Helpful / not helpful rating per answer per citizen (unique pair).</td></tr>
+  <tr><td><code>knowledge_entries</code></td><td>Verified facts the engine quotes; bilingual with keywords for retrieval; can be switched off without deleting.</td></tr>
+  <tr><td><code>prompt_templates</code></td><td>Personas: the tone and rules per topic and language, editable by the operator.</td></tr>
+  <tr><td><code>reference_contacts</code></td><td>National institutions and hotlines with a verification date and an emergency flag, so emergency numbers are listed first.</td></tr>
+  <tr><td><code>local_resources</code></td><td>Services by region, district and ward (186 legal aid providers imported, plus operator entries). Indexed by region and district for nearby lookups.</td></tr>
+  <tr><td><code>system_settings</code></td><td>Key-value store; only keys defined in the settings schema are accepted and values are validated and cached.</td></tr>
+  <tr><td><code>community_*</code></td><td>Threads, membership, posts with replies, reactions and invitations for the community board.</td></tr>
+  <tr><td><code>sessions</code>, <code>cache</code>, <code>jobs</code></td><td>Laravel framework tables: web sessions, cached settings and rate limits, and the queue of SMS messages waiting to be processed.</td></tr>
+</table>
+
+<h2 class="pb">7. Deployment and integration design</h2>
+<div class="fig">
+<svg viewBox="0 0 800 330" xmlns="http://www.w3.org/2000/svg">
+  <!-- left: internet -->
+  <rect class="w" x="10" y="20" width="170" height="290" rx="8"/>
+  <text class="th" x="22" y="38">INTERNET / MOBILE NETWORKS</text>
+  <rect class="p" x="22" y="50" width="146" height="44" rx="6"/><text class="tb" x="95" y="68" text-anchor="middle">Citizens (web)</text><text class="ts" x="95" y="84" text-anchor="middle">browsers, installed PWA</text>
+  <rect class="x" x="22" y="106" width="146" height="44" rx="6"/><text class="tb" x="95" y="124" text-anchor="middle">SMS gateway</text><text class="ts" x="95" y="140" text-anchor="middle">Africa's Talking</text>
+  <rect class="p" x="22" y="162" width="146" height="44" rx="6"/><text class="tb" x="95" y="180" text-anchor="middle">Operators</text><text class="ts" x="95" y="196" text-anchor="middle">administration panel</text>
+  <rect class="x" x="22" y="218" width="146" height="40" rx="6"/><text class="tb" x="95" y="235" text-anchor="middle">Google Gemini API</text><text class="ts" x="95" y="250" text-anchor="middle">outbound only</text>
+  <rect class="x" x="22" y="266" width="146" height="36" rx="6"/><text class="tb" x="95" y="282" text-anchor="middle">mslac.or.tz</text><text class="ts" x="95" y="296" text-anchor="middle">legal aid register</text>
+
+  <!-- server -->
+  <rect class="w" x="230" y="20" width="560" height="290" rx="8" style="stroke-dasharray:none;stroke:#15803d;stroke-width:1.6"/>
+  <text class="th" x="242" y="38">APPLICATION SERVER (LINUX, ONE OR MORE INSTANCES)</text>
+  <rect class="n" x="242" y="52" width="150" height="60" rx="6"/>
+  <text class="tb" x="317" y="72" text-anchor="middle">Web server</text>
+  <text class="ts" x="317" y="87" text-anchor="middle">Nginx or Apache, HTTPS</text>
+  <text class="ts" x="317" y="100" text-anchor="middle">serves public/ and static assets</text>
+  <rect class="n" x="412" y="52" width="180" height="60" rx="6"/>
+  <text class="tb" x="502" y="72" text-anchor="middle">PHP-FPM · Laravel application</text>
+  <text class="ts" x="502" y="87" text-anchor="middle">web chat, site, admin, webhook</text>
+  <text class="ts" x="502" y="100" text-anchor="middle">configuration from .env</text>
+  <rect class="n" x="612" y="52" width="166" height="60" rx="6"/>
+  <text class="tb" x="695" y="72" text-anchor="middle">Queue worker / cron</text>
+  <text class="ts" x="695" y="87" text-anchor="middle">php artisan schedule:run</text>
+  <text class="ts" x="695" y="100" text-anchor="middle">drains queue, weekly import</text>
+  <rect class="x" x="412" y="140" width="180" height="56" rx="6"/>
+  <text class="tb" x="502" y="160" text-anchor="middle">MySQL 8</text>
+  <text class="ts" x="502" y="175" text-anchor="middle">application tables, sessions,</text>
+  <text class="ts" x="502" y="188" text-anchor="middle">cache, queue (all one database)</text>
+  <rect class="x" x="612" y="140" width="166" height="56" rx="6"/>
+  <text class="tb" x="695" y="160" text-anchor="middle">Storage and logs</text>
+  <text class="ts" x="695" y="175" text-anchor="middle">storage/logs, knowledge</text>
+  <text class="ts" x="695" y="188" text-anchor="middle">import files</text>
+  <rect class="d" x="242" y="214" width="536" height="84" rx="6"/>
+  <text class="tb" x="254" y="232">Installation (from README)</text>
+  <text class="tc" x="254" y="248">composer install · npm install &amp;&amp; npm run build · php artisan key:generate</text>
+  <text class="tc" x="254" y="262">php artisan migrate --seed · php artisan queue:work (or scheduler every minute)</text>
+  <text class="tc" x="254" y="276">gateway callback: https://&lt;host&gt;/api/sms/inbound?token=&lt;AT_WEBHOOK_SECRET&gt;</text>
+  <text class="tc" x="254" y="290">environment: GEMINI_API_KEY, AT_USERNAME, AT_API_KEY, AT_FROM=15054, DB_*</text>
+
+  <!-- arrows -->
+  <path class="a" d="M168,72 L242,72"/>
+  <path class="a" d="M168,128 L242,90"/>
+  <path class="a" d="M168,184 L242,100"/>
+  <path class="a" d="M412,82 L392,82" style="marker-end:none"/>
+  <path class="a" d="M502,112 L502,140"/>
+  <path class="a" d="M695,112 L695,140"/>
+  <path class="a" d="M612,168 L592,168" style="marker-end:none"/>
+  <path class="ab" d="M412,96 L168,238"/>
+  <path class="ab" d="M612,96 L168,284" style="stroke-dasharray:4 3"/>
+</svg>
+<div class="cap">Figure 7. Deployment view. Outbound calls (blue) use verified TLS; the gateway callback is protected by a secret token.</div>
+</div>
+
+<h3>7.1 Integration details</h3>
+<table>
+  <tr><th style="width:24%">Integration</th><th>How it is implemented</th></tr>
+  <tr><td>Inbound SMS</td><td>The gateway posts <code>from</code>, <code>to</code>, <code>text</code>, <code>id</code> to <code>/api/sms/inbound</code>. The <code>VerifySmsWebhook</code> middleware compares the <code>token</code> query parameter or <code>X-Webhook-Token</code> header with the configured secret. With <code>AT_REQUIRE_KEYWORD</code> on, messages without the keyword are ignored (shared shortcodes). The keyword is removed and the message queued.</td></tr>
+  <tr><td>Outbound SMS</td><td><code>SmsService</code> posts to the gateway messaging endpoint (sandbox or live chosen by the username) with the shortcode as sender. Long replies are kept within the SMS word budget by the engine.</td></tr>
+  <tr><td>Language model</td><td><code>GeminiClient</code> calls <code>generateContent</code> with a system instruction and the conversation turns; model name, temperature and maximum tokens come from settings. Responses are classified as ok, safety-blocked, error or unconfigured.</td></tr>
+  <tr><td>TLS</td><td>All outbound HTTPS calls verify certificates using a bundled CA store, so the application behaves the same on Windows and Linux hosts.</td></tr>
+  <tr><td>Legal aid register</td><td>The console command <code>huru:import-legal-aid</code> downloads the public provider list, maps names, regions, districts and addresses to <code>local_resources</code>, and runs weekly from the scheduler.</td></tr>
+  <tr><td>Offline web use</td><td>A service worker caches the application shell and shows an offline page with the SMS instructions; chat, admin and API responses are never cached.</td></tr>
+</table>
+
+<h2 class="pb">8. Security and privacy design</h2>
+<table>
+  <tr><th style="width:26%">Concern</th><th>Design</th></tr>
+  <tr><td>Citizen login (web)</td><td>Phone number plus one-time SMS code; the code is stored hashed, expires after a set number of minutes, allows five attempts, and requests are rate-limited per number. The session is regenerated and the CSRF token rotated after login.</td></tr>
+  <tr><td>Operator login</td><td>E-mail and hashed password; login attempts throttled; every admin route requires an authenticated user with the admin role (<code>EnsureAdmin</code>).</td></tr>
+  <tr><td>Gateway callback</td><td>Secret token required on every inbound SMS and delivery report; requests without it are rejected before any processing.</td></tr>
+  <tr><td>Request protection</td><td>CSRF tokens on all state-changing web requests; per-route throttling on OTP, sending, posting and login; input validation on every controller.</td></tr>
+  <tr><td>Abuse and safety</td><td>Word-list moderation with warnings, strikes and bans; model safety blocks count as strikes; emergencies surface official hotlines first; per-citizen rate limit.</td></tr>
+  <tr><td>Data minimisation</td><td>Only the phone number and the conversation are stored. The name and number are never sent to the model. Phone numbers are masked in the admin panel and in logs.</td></tr>
+  <tr><td>Secrets</td><td>API keys, the webhook secret and database credentials live only in the <code>.env</code> file, which is excluded from the deposited package and from version control.</td></tr>
+  <tr><td>Settings integrity</td><td>Only keys declared in the settings schema can be written; each value is validated against its declared type and options.</td></tr>
+  <tr><td>Transport</td><td>HTTPS for citizens and operators; verified TLS for all outbound calls.</td></tr>
+</table>
+
+<h2>9. Technology stack</h2>
+<table>
+  <tr><th style="width:26%">Layer</th><th>Technology</th></tr>
+  <tr><td>Language and framework</td><td>PHP 8.2+ with Laravel 12 (routing, Eloquent ORM, queue, scheduler, sessions, validation, testing)</td></tr>
+  <tr><td>Database</td><td>MySQL 8 in production; SQLite for local testing; migrations define every table</td></tr>
+  <tr><td>Front end</td><td>Blade templates, hand-written CSS and JavaScript, no front-end framework; installable PWA with service worker</td></tr>
+  <tr><td>SMS</td><td>Africa's Talking HTTP API (shortcode 15054, keyword HURU), called directly with Laravel's HTTP client</td></tr>
+  <tr><td>Language model</td><td>Google Gemini <code>generateContent</code> API behind the <code>LlmClient</code> interface</td></tr>
+  <tr><td>Build and tests</td><td>Composer, npm with Vite and Tailwind for asset building, PHPUnit (28 tests, 135 assertions)</td></tr>
+  <tr><td>Size of the original code</td><td>112 files, 7,991 lines (see the Source Code Listing)</td></tr>
+</table>
+
+<h2 class="pb">10. Screenshots of the user interfaces</h2>
+<p class="muted">All screenshots were captured on 9 October 2026 from a running installation of version 1.0 with sample data. The phone number shown belongs to a sample citizen "Asha" in Shinyanga and is fictitious. The SMS views show the exact messages exchanged with the service as they appear in a phone's messaging application. Answers in the sample conversation illustrate the format produced by the engine.</p>
+
+<h3>10.1 SMS interface (any phone, no internet)</h3>
+<div class="shots">
+  <div class="shot half phone"><img src="screenshots/11_sms_commands.png" alt="SMS commands"><div class="cap">Figure 8. Service commands by SMS: MSAADA (help), JINA (name), MKOA (region). All replies are generated by the application.</div></div>
+  <div class="shot half phone"><img src="screenshots/12_sms_question.png" alt="SMS question"><div class="cap">Figure 9. A question by SMS with the keyword HURU to 15054 and the reply, which names a legal aid provider in Kahama and the emergency number.</div></div>
+</div>
+
+<h3 class="pb">10.2 Web chat interface</h3>
+<div class="shots">
+  <div class="shot third"><img src="screenshots/08_chat_login_mobile.png" alt="Web chat login"><div class="cap">Figure 10. Web chat login on a phone: enter the phone number and choose the language.</div></div>
+  <div class="shot third"><img src="screenshots/09_chat_otp_mobile.png" alt="One-time code"><div class="cap">Figure 11. Entering the one-time code received by SMS.</div></div>
+</div>
+<div class="shot"><img src="screenshots/02_chat_login_desktop.png" alt="Web chat login desktop" style="max-width:78%"><div class="cap">Figure 12. The same login screen on a computer, showing the SMS alternative (HURU to 15054).</div></div>
+<div class="shot pb"><img src="screenshots/05_chat_conversation_desktop.png" alt="Web chat conversation"><div class="cap">Figure 13. A conversation on a computer: topic labels on each answer, helpful / not helpful buttons, and history search by keyword, date and topic.</div></div>
+<div class="shots">
+  <div class="shot half"><img src="screenshots/10_chat_conversation_mobile.png" alt="Web chat conversation mobile"><div class="cap">Figure 14. The same conversation on a phone, including an emergency answer that gives the hotline first.</div></div>
+  <div class="shot half"><img src="screenshots/06_chat_preferences_desktop.png" alt="Preferences"><div class="cap">Figure 15. Preferences: name, reply language and region for nearby services.</div></div>
+</div>
+
+<h3 class="pb">10.3 Public website</h3>
+<div class="shot"><img src="screenshots/01_home_desktop.png" alt="Home page"><div class="cap">Figure 16. Landing page: the SMS instructions (HURU to 15054), how it works, topics with example questions, and the contact form.</div></div>
+<div class="shots pb">
+  <div class="shot half"><img src="screenshots/07_home_mobile.png" alt="Home page mobile"><div class="cap">Figure 17. The landing page on a phone.</div></div>
+  <div class="shot half"><img src="screenshots/03_community_desktop.png" alt="Community"><div class="cap">Figure 18. Community board where logged-in citizens share advice in threads.</div><img src="screenshots/04_privacy_desktop.png" alt="Privacy policy" style="margin-top:8pt"><div class="cap">Figure 19. Published privacy policy.</div></div>
+</div>
+
+<h3 class="pb">10.4 Administration panel (operator)</h3>
+<div class="shot"><img src="screenshots/13_admin_login.png" alt="Admin login"><div class="cap">Figure 20. Operator sign-in.</div></div>
+<div class="shot pb"><img src="screenshots/14_admin_dashboard.png" alt="Dashboard"><div class="cap">Figure 21. Dashboard: citizens, questions per day, channels, engine and gateway status, topics this week and recent interactions.</div></div>
+<div class="shot pb"><img src="screenshots/15_admin_conversations.png" alt="Conversations"><div class="cap">Figure 22. Conversations list with channel and topic filters.</div></div>
+<div class="shot"><img src="screenshots/16_admin_conversation_detail.png" alt="Conversation detail"><div class="cap">Figure 23. A citizen's conversation with the engine log for each answer (model, tokens, latency, instructions used).</div></div>
+<div class="shot pb"><img src="screenshots/17_admin_knowledge.png" alt="Knowledge base"><div class="cap">Figure 24. Knowledge base: verified entries by topic and language, with file import.</div></div>
+<div class="shot"><img src="screenshots/18_admin_templates.png" alt="Personas"><div class="cap">Figure 25. Personas (prompt templates) per topic and language.</div></div>
+<div class="shot pb"><img src="screenshots/19_admin_contacts.png" alt="National directory"><div class="cap">Figure 26. National directory of institutions and hotlines with verification.</div></div>
+<div class="shot"><img src="screenshots/20_admin_resources.png" alt="Local services"><div class="cap">Figure 27. Local services by region and district, including the imported legal aid providers.</div></div>
+<div class="shot pb"><img src="screenshots/21_admin_users.png" alt="Citizens"><div class="cap">Figure 28. Citizens: activity, strikes, block and unblock.</div></div>
+<div class="shot pb"><img src="screenshots/22_admin_settings.png" alt="Settings"><div class="cap">Figure 29. Settings grouped as Branding, Engine, Channels and Safety; only keys in the settings schema can be changed.</div></div>
+
+<div class="docfoot">Huru SMS – System Design and Architecture, version 1.0 · Huru Digital Co. Ltd. · Prepared for COSOTA · October 2026</div>
+
+</body>
+</html>
